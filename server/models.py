@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from config import db
-
+#blah blah blah
 # Models go here!
 class Passenger(db.Model, SerializerMixin):
     __tablename__ = 'passengers'
