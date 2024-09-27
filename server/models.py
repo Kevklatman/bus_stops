@@ -1,90 +1,115 @@
 from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from datetime import datetime
-
+from sqlalchemy.orm import validates
 from config import db
 
-# Models go here!
+class Bus(db.Model, SerializerMixin):
+    __tablename__ = "buses"
+
+    id = db.Column(db.Integer, primary_key=True)
+    number = db.Column(db.String)
+    capacity = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    schedules = db.relationship('Schedule', back_populates='bus', cascade='all, delete-orphan')
+
+    serialize_rules = ('-schedules.bus',)
+
+    def __repr__(self):
+        return f"<Bus {self.id}, {self.number}, {self.capacity}>"
+
 class Passenger(db.Model, SerializerMixin):
-    __tablename__ = 'passengers'
+    __tablename__ = "passengers"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    email = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    email = db.Column(db.String)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    favorites = relationship('Favorite', back_populates='passenger')
-    comments = relationship('Comment', back_populates='passenger')
+    favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
+
+    serialize_rules = ('-favorites.passenger',)
+
+    @validates("name")
+    def validate_name(self, key, name):
+        if not name:
+            raise AssertionError("No name provided")
+        return name
+
+    @validates('email')
+    def validate_email(self, key, address):
+        if '@' not in address:
+            raise ValueError("Must provide a valid email address")
+        return address
+
+    def __repr__(self):
+        return f"<Passenger {self.name}, {self.email}>"
 
 class BusStop(db.Model, SerializerMixin):
-    __tablename__ = 'bus_stops'
+    __tablename__ = "bus_stops"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    location = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    location = db.Column(db.String)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    favorites = relationship('Favorite', back_populates='bus_stop')
-    comments = relationship('Comment', back_populates='bus_stop')
-    schedules = relationship('Schedule', back_populates='bus_stop')
+    favorites = db.relationship('Favorite', back_populates='bus_stop')
+    schedules = db.relationship('Schedule', back_populates='bus_stop')
+
+    serialize_rules = ('-favorites.bus_stop', '-schedules.bus_stop')
+
+    @validates("name")
+    def validate_name(self, key, name):
+        if not name:
+            raise AssertionError("No name provided")
+        if BusStop.query.filter(BusStop.name == name).first():
+            raise AssertionError("Bus stop name is already in use")
+        if len(name) < 3 or len(name) > 90:
+            raise AssertionError("Bus stop name must be between 3 and 90 characters")
+        return name
+
+    def __repr__(self):
+        return f"<BusStop {self.name}, {self.location}>"
 
 class Favorite(db.Model, SerializerMixin):
-    __tablename__ = 'favorites'
+    __tablename__ = "favorites"
 
-    id = Column(Integer, primary_key=True)
-    passenger_id = Column(Integer, ForeignKey('passengers.id'))
-    bus_stop_id = Column(Integer, ForeignKey('bus_stops.id'))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    passenger_id = db.Column(db.Integer, db.ForeignKey('passengers.id'))
+    bus_stop_id = db.Column(db.Integer, db.ForeignKey('bus_stops.id'))
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    passenger = relationship('Passenger', back_populates='favorites')
-    bus_stop = relationship('BusStop', back_populates='favorites')
+    passenger = db.relationship('Passenger', back_populates='favorites')
+    bus_stop = db.relationship('BusStop', back_populates='favorites')
 
-class Comment(db.Model, SerializerMixin):
-    __tablename__ = 'comments'
+    serialize_rules = ('-passenger.favorites', '-bus_stop.favorites')
 
-    id = Column(Integer, primary_key=True)
-    content = Column(Text)
-    passenger_id = Column(Integer, ForeignKey('passengers.id'))
-    bus_stop_id = Column(Integer, ForeignKey('bus_stops.id'))
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    passenger = relationship('Passenger', back_populates='comments')
-    bus_stop = relationship('BusStop', back_populates='comments')
-
-class Bus(db.Model, SerializerMixin):
-    __tablename__ = 'busses'
-
-    id = Column(Integer, primary_key=True)
-    number = Column(String)
-    capacity = Column(Integer)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    schedules = relationship('Schedule', back_populates='bus')
-    routes = relationship('Route', back_populates='bus')
+    def __repr__(self):
+        return f"<Favorite {self.id}>"
 
 class Schedule(db.Model, SerializerMixin):
-    __tablename__ = 'schedules'
+    __tablename__ = "schedules"
 
-    id = Column(Integer, primary_key=True)
-    arrival_time = Column(DateTime)
-    departure_time = Column(DateTime)
-    bus_id = Column(Integer, ForeignKey('busses.id'))
-    bus_stop_id = Column(Integer, ForeignKey('bus_stops.id'))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'))
+    bus_stop_id = db.Column(db.Integer, db.ForeignKey('bus_stops.id'))
+    arrival_time = db.Column(db.DateTime)
+    departure_time = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    bus = relationship('Bus', back_populates='schedules')
-    bus_stop = relationship('BusStop', back_populates='schedules')
+    bus = db.relationship('Bus', back_populates='schedules')
+    bus_stop = db.relationship('BusStop', back_populates='schedules')
 
-class Route(db.Model, SerializerMixin):
-    __tablename__ = 'routes'
+    serialize_rules = ('-bus.schedules', '-bus_stop.schedules')
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(Text)
-    bus_id = Column(Integer, ForeignKey('busses.id'))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (db.UniqueConstraint("bus_id", "arrival_time", "bus_stop_id"),)
 
-    bus = relationship('Bus', back_populates='routes')
+    @validates("arrival_time", "departure_time")
+    def validate_times(self, key, time):
+        if key == "arrival_time" and self.departure_time and time > self.departure_time:
+            raise AssertionError("Arrival time must be before departure time")
+        elif key == "departure_time" and self.arrival_time and time < self.arrival_time:
+            raise AssertionError("Departure time must be after arrival time")
+        return time 
+
+    def __repr__(self):
+        return f"<Schedule Bus NO: {self.bus.number}>"
