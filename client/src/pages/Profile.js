@@ -9,7 +9,7 @@ function Profile() {
 
   const handleUpdateProfile = (e) => {
     e.preventDefault();
-    fetch(`/api/users/${user.id}`, {
+    fetch(`/passengers/${user.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -22,7 +22,7 @@ function Profile() {
 
   const handleDeleteAccount = () => {
     if (window.confirm("Are you sure you want to delete your account?")) {
-      fetch(`/api/users/${user.id}`, {
+      fetch(`/passengers/${user.id}`, {
         method: "DELETE",
       }).then(() => setUser(null));
     }

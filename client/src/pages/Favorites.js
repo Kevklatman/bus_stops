@@ -9,10 +9,9 @@ function Favorites() {
 
   useEffect(() => {
     if (user) {
-      // Fetch user's favorites from API
-      fetch(`/api/users/${user.id}/favorites`)
+      fetch(`/passenger_favorites/${user.id}`)
         .then((res) => res.json())
-        .then(setFavorites);
+        .then((data) => setFavorites(data.passenger_favorites));
     }
   }, [user]);
 

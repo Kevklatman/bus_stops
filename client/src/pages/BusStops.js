@@ -8,8 +8,7 @@ function BusStops() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Fetch bus stops from API
-    fetch("/api/bus-stops")
+    fetch("/bus_stops")
       .then((res) => res.json())
       .then((data) => {
         setBusStops(data);
@@ -23,7 +22,7 @@ function BusStops() {
     const filtered = busStops.filter(
       (stop) =>
         stop.name.toLowerCase().includes(term) ||
-        stop.address.toLowerCase().includes(term)
+        stop.location.toLowerCase().includes(term)
     );
     setFilteredStops(filtered);
   };
