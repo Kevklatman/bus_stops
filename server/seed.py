@@ -33,9 +33,15 @@ def create_bus_stops(num):
 
 def create_buses(num):
     buses = []
+    used_numbers = set()
     for _ in range(num):
+        while True:
+            number = randint(100, 999)
+            if number not in used_numbers:
+                used_numbers.add(number)
+                break
         b = Bus(
-            number=fake.license_plate(),
+            number=str(number),  # Convert to string to match the Column type
             capacity=randint(20, 50)
         )
         buses.append(b)
