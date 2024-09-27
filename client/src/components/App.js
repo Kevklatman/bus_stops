@@ -10,6 +10,7 @@ import BusStops from "../pages/BusStops";
 import Favorites from "../pages/Favorites";
 import Schedule from "../pages/Schedule";
 import Profile from "../pages/Profile";
+import BusDetails from "../pages/BusDetails";
 import "../index.css";
 
 function App() {
