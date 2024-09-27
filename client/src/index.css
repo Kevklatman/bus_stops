@@ -1,7 +1,150 @@
 :root {
-  --bg: #282c34;
-  --header: #fff;
-  --link: #61dafb;
-  --text: hsla(0, 0%, 100%, 0.88);
+  --primary-color: #333333;
+  --secondary-color: #f0f0f0;
+  --accent-color: #2196F3;
+  --text-color: #333333;
+  --light-text-color: #666666;
 }
 
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: var(--text-color);
+  background-color: var(--secondary-color);
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+nav {
+  background-color: var(--primary-color);
+  padding: 0.5rem;
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+nav ul li {
+  margin: 0 1rem;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+}
+
+main {
+  flex-grow: 1;
+  padding: 2rem;
+}
+
+.home, .bus-stops, .favorites, .schedule, .profile, .bus-details, .admin-dashboard {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h2 {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+}
+
+input[type="text"], input[type="email"], textarea {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--light-text-color);
+  border-radius: 4px;
+}
+
+button {
+  background-color: var(--accent-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.bus-stop-card, .favorite-card {
+  background-color: white;
+  border: 1px solid var(--light-text-color);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bus-stop-card h3, .favorite-card h3 {
+  margin-top: 0;
+}
+
+.bus-stop-card p, .favorite-card p {
+  color: var(--light-text-color);
+}
+
+.bus-stop-card a, .favorite-card a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+ul {
+  padding-left: 1.5rem;
+}
+
+footer {
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  margin-top: auto;
+}
+
+/* Admin Dashboard specific styles */
+.admin-dashboard ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.admin-dashboard li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--light-text-color);
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  nav ul {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  nav ul li {
+    margin: 0.5rem 0;
+  }
+
+  .bus-stop-card, .favorite-card {
+    padding: 0.5rem;
+  }
+}
