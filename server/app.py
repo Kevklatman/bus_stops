@@ -39,7 +39,10 @@ class PassengerList(Resource):
         passengers = Passenger.query.all()
         return [passenger.to_dict() for passenger in passengers]
     
-class PassengerFavorite(Resource):
+    
+#method classes
+   
+class PassengerFavorites(Resource):
     def get(self, id):
         passenger = Passenger.query.get(id)
         if passenger:
@@ -138,6 +141,40 @@ class PassengerFavorite(Resource):
             return make_response({"errors": [str(e)]}, 500)
     
 
+class PassengerRegistrations(Resource):
+    def post(self):
+        data = request.get_json()
+        try:
+            name = data['name']
+            email = data['email']
+            created_at = datetime.fromisoformat(data['created_at'])
+
+            # email exists?
+            existing_passenger = Passenger.query.filter_by(email=email).first()
+            if existing_passenger:
+                return make_response({"errors": ["Passenger with this email already exists"]}, 409)
+
+            new_passenger = Passenger(
+                name=name,
+                email=email,
+                created_at=created_at
+            )
+            db.session.add(new_passenger)
+            db.session.commit()
+
+            response_data = new_passenger.to_dict()
+            return make_response(response_data, 201)
+
+        except KeyError as e:
+            return make_response({"errors": [f"Missing field: {str(e)}"]}, 400)
+        except ValueError as e:
+            return make_response({"errors": [str(e)]}, 400)
+        except IntegrityError as e:
+            db.session.rollback()
+            return make_response({"errors": ["Passenger with this email already exists"]}, 409)
+        except Exception as e:
+            db.session.rollback()
+            return make_response({"errors": [str(e)]}, 500)
 
 
     
@@ -147,7 +184,8 @@ api.add_resource(BusStopList, '/bus_stops')
 api.add_resource(BusList, '/buses')
 api.add_resource(BusSchedulesList, '/schedules')
 api.add_resource(PassengerList, '/passengers')
-api.add_resource(PassengerFavorite, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
+api.add_resource(PassengerFavorites, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
+api.add_resource(PassengerRegistrations, '/passengers/register')
 
 
 if __name__ == '__main__':
