@@ -55,13 +55,14 @@ class BusStop(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     location = db.Column(db.String, nullable=False)
+    comments = db.Column(db.String)  # New field for comments
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     favorites = db.relationship('Favorite', back_populates='bus_stop')
     schedules = db.relationship('Schedule', back_populates='bus_stop')
 
     serialize_rules = ('-favorites.bus_stop', '-schedules.bus_stop')
-    serialize_only = ('id', 'name', 'location')
+    serialize_only = ('id', 'name', 'location', 'comments')  
 
     @validates("name")
     def validate_name(self, key, name):

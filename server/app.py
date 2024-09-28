@@ -38,6 +38,22 @@ class BusStopResource(Resource):
         db.session.commit()
         return make_response(jsonify(new_bus_stop.to_dict()), 201)
 
+    def put(self, id):
+        bus_stop = BusStop.query.get(id)
+        if not bus_stop:
+            return make_response(jsonify({'error': "Bus Stop not found"}), 404)
+
+        data = request.get_json()
+        if 'comments' in data:
+            bus_stop.comments = data['comments']
+
+        try:
+            db.session.commit()
+            return make_response(jsonify(bus_stop.to_dict()), 200)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 400)
+
 class ScheduleResource(Resource):
     def get(self, id=None):
         if id:
