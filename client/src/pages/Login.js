@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { UserContext } from "../contexts/UserContext";
+import { useHistory } from "react-router-dom";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Required"),
@@ -10,7 +11,7 @@ const LoginSchema = Yup.object().shape({
 
 function Login() {
   const { login } = useContext(UserContext);
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const history = useHistory();
 
   return (
     <div className="login">
@@ -18,29 +19,26 @@ function Login() {
       <Formik
         initialValues={{ email: "", password: "" }}
         validationSchema={LoginSchema}
-        onSubmit={(values, { setSubmitting, setErrors }) => {
-          fetch(`${API_URL}/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(values),
-          })
-            .then((res) => {
-              if (!res.ok) {
-                throw new Error("Login failed");
-              }
-              return res.json();
-            })
-            .then((data) => {
-              login(data);
-              setSubmitting(false);
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              setErrors({ submit: error.message });
-              setSubmitting(false);
+        onSubmit={async (values, { setSubmitting, setErrors }) => {
+          try {
+            const response = await fetch("/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(values),
             });
+            if (!response.ok) {
+              throw new Error("Login failed");
+            }
+            const userData = await response.json();
+            login(userData);
+            history.push("/");
+          } catch (error) {
+            setErrors({ submit: error.message });
+          } finally {
+            setSubmitting(false);
+          }
         }}
       >
         {({ isSubmitting, errors }) => (

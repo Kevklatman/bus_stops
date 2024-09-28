@@ -1,4 +1,3 @@
-// src/pages/Profile.js
 import React, { useContext, useState } from "react";
 import { UserContext } from "../contexts/UserContext";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -17,7 +16,6 @@ function Profile() {
   const { user, setUser } = useContext(UserContext);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   if (!user) return <div>Please log in to view your profile.</div>;
 
@@ -35,7 +33,7 @@ function Profile() {
           setIsLoading(true);
           setError(null);
           try {
-            const response = await fetch(`${API_URL}/passengers/${user.id}`, {
+            const response = await fetch(`/passengers/${user.id}`, {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",
@@ -81,7 +79,7 @@ function Profile() {
             setIsLoading(true);
             setError(null);
             try {
-              const response = await fetch(`${API_URL}/passengers/${user.id}`, {
+              const response = await fetch(`/passengers/${user.id}`, {
                 method: "DELETE",
               });
               if (!response.ok) {
