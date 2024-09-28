@@ -13,6 +13,7 @@ class Bus(db.Model, SerializerMixin):
     schedules = db.relationship('Schedule', back_populates='bus', cascade='all, delete-orphan')
 
     serialize_rules = ('-schedules.bus',)
+    serialize_only = ('id', 'number', 'capacity')
 
     def __repr__(self):
         return f"<Bus {self.id}, {self.number}, {self.capacity}>"
@@ -56,6 +57,7 @@ class BusStop(db.Model, SerializerMixin):
     schedules = db.relationship('Schedule', back_populates='bus_stop')
 
     serialize_rules = ('-favorites.bus_stop', '-schedules.bus_stop')
+    serialize_only = ('id', 'name', 'location')
 
     @validates("name")
     def validate_name(self, key, name):
@@ -84,7 +86,7 @@ class Favorite(db.Model, SerializerMixin):
     serialize_rules = ('-passenger.favorites', '-bus_stop.favorites')
 
     def __repr__(self):
-        return f"<Favorite {self.id}>"
+        return f"<Favorite {self.id}, {self.passenger_id}, {self.created_at}>"
 
 class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
