@@ -1,9 +1,9 @@
-#app.py
 from flask import make_response, jsonify, request
 from flask_restful import Resource
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import check_password_hash
 
 from config import app, db, api
 from models import Bus, Passenger, BusStop, Favorite, Schedule
@@ -29,6 +29,31 @@ class BusResource(Resource):
         buses = Bus.query.all()
         return make_response(jsonify([bus.to_dict() for bus in buses]), 200)
 
+    def post(self):
+        data = request.get_json()
+        new_bus = Bus(**data)
+        db.session.add(new_bus)
+        db.session.commit()
+        return make_response(jsonify(new_bus.to_dict()), 201)
+
+    def patch(self, id):
+        bus = Bus.query.get(id)
+        if not bus:
+            return make_response(jsonify({'error': "Bus not found"}), 404)
+        data = request.get_json()
+        for key, value in data.items():
+            setattr(bus, key, value)
+        db.session.commit()
+        return make_response(jsonify(bus.to_dict()), 200)
+
+    def delete(self, id):
+        bus = Bus.query.get(id)
+        if not bus:
+            return make_response(jsonify({'error': "Bus not found"}), 404)
+        db.session.delete(bus)
+        db.session.commit()
+        return make_response(jsonify({'message': "Bus deleted successfully"}), 200)
+
 class BusStopResource(Resource):
     def get(self, id=None):
         if id:
@@ -46,14 +71,14 @@ class BusStopResource(Resource):
         db.session.commit()
         return make_response(jsonify(new_bus_stop.to_dict()), 201)
 
-    def put(self, id):
+    def patch(self, id):
         bus_stop = BusStop.query.get(id)
         if not bus_stop:
             return make_response(jsonify({'error': "Bus Stop not found"}), 404)
 
         data = request.get_json()
-        if 'comments' in data:
-            bus_stop.comments = data['comments']
+        for key, value in data.items():
+            setattr(bus_stop, key, value)
 
         try:
             db.session.commit()
@@ -61,6 +86,14 @@ class BusStopResource(Resource):
         except Exception as e:
             db.session.rollback()
             return make_response(jsonify({'error': str(e)}), 400)
+
+    def delete(self, id):
+        bus_stop = BusStop.query.get(id)
+        if not bus_stop:
+            return make_response(jsonify({'error': "Bus Stop not found"}), 404)
+        db.session.delete(bus_stop)
+        db.session.commit()
+        return make_response(jsonify({'message': "Bus Stop deleted successfully"}), 200)
 
 class ScheduleResource(Resource):
     def get(self, id=None):
@@ -102,24 +135,22 @@ class PassengerResource(Resource):
         except IntegrityError:
             db.session.rollback()
             return make_response(jsonify({'error': "Passenger already exists"}), 409)
-    
+
     def patch(self, id):
         passenger = Passenger.query.get(id)
         if not passenger:
             return make_response(jsonify({'error': "Passenger not found"}), 404)
-
+        
         data = request.get_json()
-        if 'name' in data:
-            passenger.name = data['name']
-        if 'email' in data:
-            passenger.email = data['email']
-
+        for key, value in data.items():
+            setattr(passenger, key, value)
+        
         try:
             db.session.commit()
             return make_response(jsonify(passenger.to_dict()), 200)
-        except Exception as e:
+        except IntegrityError:
             db.session.rollback()
-            return make_response(jsonify({'error': str(e)}), 400)
+            return make_response(jsonify({'error': "Email already in use"}), 409)
 
     def delete(self, id):
         passenger = Passenger.query.get(id)
@@ -189,20 +220,20 @@ class PassengerFavorites(Resource):
         return make_response(jsonify(response_data), 200)
     
 class BusStopsForBus(Resource):
-        def get(self, bus_id):
-            bus = Bus.query.get(bus_id)
-            if not bus:
-                return make_response(jsonify({'error': 'Bus not found'}), 404)
+    def get(self, bus_id):
+        bus = Bus.query.get(bus_id)
+        if not bus:
+            return make_response(jsonify({'error': 'Bus not found'}), 404)
 
-            bus_stops = BusStop.query.join(Schedule).filter(Schedule.bus_id == bus_id).all()
+        bus_stops = BusStop.query.join(Schedule).filter(Schedule.bus_id == bus_id).all()
 
-            response_data = {
-                'bus_id': bus.id,
-                'bus_number': bus.number,
-                'bus_stops': [bus_stop.to_dict() for bus_stop in bus_stops]
-            }
+        response_data = {
+            'bus_id': bus.id,
+            'bus_number': bus.number,
+            'bus_stops': [bus_stop.to_dict() for bus_stop in bus_stops]
+        }
 
-            return make_response(jsonify(response_data), 200)
+        return make_response(jsonify(response_data), 200)
         
 class SchedulesForBusStop(Resource):
     def get(self, bus_stop_id):
@@ -220,7 +251,6 @@ class SchedulesForBusStop(Resource):
 
         return make_response(jsonify(response_data), 200)
     
-
 class LoginResource(Resource):
     def post(self):
         data = request.get_json()
@@ -228,7 +258,7 @@ class LoginResource(Resource):
         password = data.get('password')
 
         passenger = Passenger.query.filter_by(email=email).first()
-        if passenger and passenger.password == password:
+        if passenger and check_password_hash(passenger.password, password):
             login_user(passenger)
             return make_response(jsonify({'id': passenger.id, 'email': passenger.email, 'is_admin': passenger.is_admin}), 200)
         else:
@@ -247,21 +277,17 @@ class CheckSessionResource(Resource):
         else:
             return make_response(jsonify({'error': 'Not authenticated'}), 401)
 
-
-
 api.add_resource(BusResource, '/buses', '/buses/<int:id>')
 api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
 api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
-api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>', methods=['GET', 'POST', 'DELETE', 'PATCH'])
+api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
 api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')
 api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 api.add_resource(BusStopsForBus, '/buses/<int:bus_id>/bus_stops')
 api.add_resource(SchedulesForBusStop, '/bus_stops/<int:bus_stop_id>/schedules')
-
 api.add_resource(LoginResource, '/login')
 api.add_resource(LogoutResource, '/logout')
 api.add_resource(CheckSessionResource, '/check_session')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-
