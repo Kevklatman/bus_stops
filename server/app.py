@@ -3,8 +3,9 @@
 # Standard library imports
 
 # Remote library imports
-from flask import request
+from flask import request, make_response
 from flask_restful import Resource
+from datetime import datetime
 
 # Local imports
 from config import app, db, api
@@ -32,7 +33,7 @@ class PassengerList(Resource):
         passengers = Passenger.query.all()
         return [passenger.to_dict() for passenger in passengers]
     
-class PassengerFavorites(Resource):
+class PassengerFavorite(Resource):
     def get(self, id):
         passenger = Passenger.query.get(id)
         if passenger:
@@ -62,6 +63,48 @@ class PassengerFavorites(Resource):
             return response_data, 200
         else:
             return {'error': 'Passenger not found'}, 404
+
+    def post(self):
+        data = request.get_json()
+        try:
+            passenger_id = data['passenger_id']
+            bus_stop_id = data['bus_stop_id']
+            created_at = datetime.fromisoformat(data['created_at'])
+
+            # passenger exists?
+            passenger = Passenger.query.get(passenger_id)
+            if not passenger:
+                return make_response({"errors": ["Passenger not found"]}, 404)
+
+            # stop exists?
+            bus_stop = BusStop.query.get(bus_stop_id)
+            if not bus_stop:
+                return make_response({"errors": ["Bus stop not found"]}, 404)
+
+            # is duplicate?
+            existing_favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
+            if existing_favorite:
+                return make_response({"errors": ["Favorite already exists"]}, 409)
+
+            new_favorite_stop = Favorite(
+                passenger_id=passenger_id,
+                bus_stop_id=bus_stop_id,
+                created_at=created_at
+            )
+            db.session.add(new_favorite_stop)
+            db.session.commit()
+            response_data = new_favorite_stop.to_dict()
+            return make_response(response_data, 201)
+
+        except KeyError as e:
+            return make_response({"errors": [f"Missing field: {str(e)}"]}, 400)
+        except ValueError as e:
+            return make_response({"errors": [str(e)]}, 400)
+        except AssertionError as e:
+            return make_response({"errors": [str(e)]}, 400)
+        except Exception as e:
+            db.session.rollback()
+            return make_response({"errors": [str(e)]}, 500)
     
 
     
@@ -70,7 +113,7 @@ class PassengerFavorites(Resource):
 api.add_resource(BusStopList, '/bus_stops')
 api.add_resource(BusList, '/buses')
 api.add_resource(PassengerList, '/passengers')
-api.add_resource(PassengerFavorites, '/favorites/<int:id>')
+api.add_resource(PassengerFavorite, '/favorites', '/favorites/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
