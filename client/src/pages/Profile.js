@@ -15,7 +15,7 @@ function Profile() {
     setError(null);
     try {
       const response = await fetch(`/passengers/${user.id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
