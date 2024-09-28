@@ -56,7 +56,7 @@ class BusStop(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     location = db.Column(db.String, nullable=False)
-    comments = db.Column(db.String)  # New field for comments
+    comments = db.Column(db.String) 
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     favorites = db.relationship('Favorite', back_populates='bus_stop')
