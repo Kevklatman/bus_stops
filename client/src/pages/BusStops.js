@@ -6,13 +6,26 @@ function BusStops() {
   const [busStops, setBusStops] = useState([]);
   const [filteredStops, setFilteredStops] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    setIsLoading(true);
     fetch("/bus_stops")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch bus stops");
+        }
+        return res.json();
+      })
       .then((data) => {
         setBusStops(data);
         setFilteredStops(data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setIsLoading(false);
       });
   }, []);
 
@@ -27,6 +40,9 @@ function BusStops() {
     setFilteredStops(filtered);
   };
 
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
     <div className="bus-stops">
       <h2>Bus Stops</h2>
@@ -36,7 +52,11 @@ function BusStops() {
         value={searchTerm}
         onChange={handleSearch}
       />
-      <BusStopList busStops={filteredStops} />
+      {filteredStops.length > 0 ? (
+        <BusStopList busStops={filteredStops} />
+      ) : (
+        <p>No bus stops found.</p>
+      )}
     </div>
   );
 }

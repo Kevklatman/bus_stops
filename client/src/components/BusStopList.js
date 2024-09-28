@@ -3,6 +3,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 function BusStopList({ busStops }) {
+  if (!Array.isArray(busStops) || busStops.length === 0) {
+    return <p>No bus stops available.</p>;
+  }
+
   return (
     <div className="bus-stop-list">
       {busStops.map((stop) => (

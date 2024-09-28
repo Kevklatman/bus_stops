@@ -199,15 +199,14 @@ class SchedulesForBusStop(Resource):
 
 
 
-api.add_resource(SchedulesForBusStop, '/bus_stops/<int:bus_stop_id>/schedules')  # GET (Read)
-api.add_resource(BusResource, '/buses', '/buses/<int:id>')  # GET 
-api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')  # GET , POST 
-api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')  # GET , POST 
-api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')  # GET , POST , DELETE 
-api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')  # GET , POST , DELETE 
-
-api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')  # GET (gets all favorites for passenger)
-api.add_resource(BusStopsForBus, '/buses/<int:bus_id>/bus_stops')  # GET (gets all bus_stops for a selected bus)
+api.add_resource(BusResource, '/buses', '/buses/<int:id>')
+api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
+api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
+api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
+api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')
+api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
+api.add_resource(BusStopsForBus, '/buses/<int:bus_id>/bus_stops')
+api.add_resource(SchedulesForBusStop, '/bus_stops/<int:bus_stop_id>/schedules')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
