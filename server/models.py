@@ -1,4 +1,3 @@
-#models.py
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from config import db
@@ -115,7 +114,7 @@ class Passenger(db.Model, UserMixin, SerializerMixin):
     bus_stops = association_proxy('favorites', 'bus_stop')
 
     serialize_rules = ('-favorites.passenger',)
-    serialize_only = ('id', 'name', 'email', 'created_at')
+    serialize_only = ('id', 'username', 'name', 'email', 'created_at')
 
     @validates("name")
     def validate_name(self, key, name):
