@@ -10,7 +10,7 @@ class Bus(db.Model, SerializerMixin):
     capacity = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    schedules = db.relationship('Schedule', back_populates='bus', cascade='all, delete-orphan')
+    schedules = db.relationship('Schedule', back_populates='bus', )#cascade='all, delete-orphan' <I don't think we'll need this line commenting out for now>
 
     serialize_rules = ('-schedules.bus',)
     serialize_only = ('id', 'number', 'capacity')

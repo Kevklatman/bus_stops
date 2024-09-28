@@ -105,6 +105,31 @@ class PassengerFavorite(Resource):
         except Exception as e:
             db.session.rollback()
             return make_response({"errors": [str(e)]}, 500)
+        
+    def delete(self, passenger_id, bus_stop_id):
+        try:
+            # passenger exists
+            passenger = Passenger.query.get(passenger_id)
+            if not passenger:
+                return make_response({"errors": ["Passenger not found"]}, 404)
+
+            # stop exists?
+            bus_stop = BusStop.query.get(bus_stop_id)
+            if not bus_stop:
+                return make_response({"errors": ["Bus stop not found"]}, 404)
+
+            # fave exists?
+            favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
+            if not favorite:
+                return make_response({"errors": ["Favorite not found"]}, 404)
+
+            db.session.delete(favorite)
+            db.session.commit()
+            return make_response({"message": "Favorite deleted successfully"}, 200)
+
+        except Exception as e:
+            db.session.rollback()
+            return make_response({"errors": [str(e)]}, 500)
     
 
     
@@ -113,7 +138,7 @@ class PassengerFavorite(Resource):
 api.add_resource(BusStopList, '/bus_stops')
 api.add_resource(BusList, '/buses')
 api.add_resource(PassengerList, '/passengers')
-api.add_resource(PassengerFavorite, '/favorites', '/favorites/<int:id>')
+api.add_resource(PassengerFavorite, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
