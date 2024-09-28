@@ -6,6 +6,7 @@
 from flask import request, make_response
 from flask_restful import Resource
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 # Local imports
 from config import app, db, api
@@ -27,6 +28,11 @@ class BusList(Resource):
     def get(self):
         buses = Bus.query.all()
         return [bus.to_dict() for bus in buses]
+    
+class BusSchedulesList(Resource):
+    def get(self):
+        schedules = Schedule.query.all()
+        return [schedule.to_dict() for schedule in schedules]
     
 class PassengerList(Resource):
     def get(self):
@@ -132,13 +138,17 @@ class PassengerFavorite(Resource):
             return make_response({"errors": [str(e)]}, 500)
     
 
+
+
     
 
 
 api.add_resource(BusStopList, '/bus_stops')
 api.add_resource(BusList, '/buses')
+api.add_resource(BusSchedulesList, '/schedules')
 api.add_resource(PassengerList, '/passengers')
 api.add_resource(PassengerFavorite, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

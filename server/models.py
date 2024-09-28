@@ -6,7 +6,7 @@ class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
 
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.String)
+    number = db.Column(db.Integer)
     capacity = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
@@ -103,6 +103,7 @@ class Schedule(db.Model, SerializerMixin):
     bus_stop = db.relationship('BusStop', back_populates='schedules')
 
     serialize_rules = ('-bus.schedules', '-bus_stop.schedules')
+    serialize_only = ('id', 'bus_id', 'bus_stop_id', 'arrival_time', 'departure_time', 'created_at')
 
     __table_args__ = (db.UniqueConstraint("bus_id", "arrival_time", "bus_stop_id"),)
 
