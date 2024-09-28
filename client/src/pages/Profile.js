@@ -1,7 +1,7 @@
 // src/pages/Profile.js
 import React, { useContext, useState } from "react";
 import { UserContext } from "../contexts/UserContext";
-import { useFormik } from 'formik';
+import { useFormik } from "formik";
 import * as Yup from "yup";
 
 function Profile() {
@@ -13,9 +13,10 @@ function Profile() {
     name: Yup.string()
       .min(1, "Item name must be at least 1 character long")
       .required("Item name is required"),
-    email: Yup.string().email("Invalid email format").required("Email is required"),
+    email: Yup.string()
+      .email("Invalid email format")
+      .required("Email is required"),
   });
-  
 
   const formik = useFormik({
     initialValues: {
@@ -77,7 +78,10 @@ function Profile() {
     <div className="profile">
       <h2>Your Profile</h2>
       {error && <h2 className="error">{error}</h2>}
-      {formik.errors && Object.values(formik.errors).map(error => <h2 key={error}>{error}</h2>)}
+      {formik.errors &&
+        Object.values(formik.errors).map((error) => (
+          <h2 key={error}>{error}</h2>
+        ))}
       <form onSubmit={formik.handleSubmit}>
         <input
           type="text"

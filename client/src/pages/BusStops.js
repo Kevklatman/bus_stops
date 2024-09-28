@@ -1,4 +1,3 @@
-// src/pages/BusStops.js
 import React, { useState, useEffect } from "react";
 import BusStopList from "../components/BusStopList";
 
@@ -8,10 +7,11 @@ function BusStops() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     setIsLoading(true);
-    fetch("/bus_stops")
+    fetch(`${API_URL}/bus_stops`)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Failed to fetch bus stops");
@@ -27,7 +27,7 @@ function BusStops() {
         setError(err.message);
         setIsLoading(false);
       });
-  }, []);
+  }, [API_URL]);
 
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
