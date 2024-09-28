@@ -16,7 +16,8 @@ def create_passengers(num):
     for _ in range(num):
         p = Passenger(
             name=fake.name(),
-            email=fake.email()
+            email=fake.email(),
+            password=fake.password()
         )
         passengers.append(p)
     return passengers
