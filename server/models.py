@@ -29,7 +29,8 @@ class Passenger(db.Model, SerializerMixin):
     favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
 
     serialize_rules = ('-favorites.passenger',)
-
+    serialize_only = ('id', 'name', 'email')
+    
     @validates("name")
     def validate_name(self, key, name):
         if not name:

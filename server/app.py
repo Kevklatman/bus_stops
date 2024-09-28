@@ -27,12 +27,18 @@ class BusList(Resource):
         buses = Bus.query.all()
         return [bus.to_dict() for bus in buses]
     
+class PassengerHandling(Resource):
+    def get(self):
+        passengers = Passenger.query.all()
+        return [passenger.to_dict() for passenger in passengers]
+    
 
     
 
 
 api.add_resource(BusStopList, '/bus_stops')
 api.add_resource(BusList, '/buses')
+api.add_resource(PassengerHandling, '/passengers')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
