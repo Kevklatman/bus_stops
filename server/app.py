@@ -178,7 +178,7 @@ class PassengerRegistrations(Resource):
             db.session.rollback()
             return make_response({"errors": [str(e)]}, 500)
 
-class PassengerDetail(Resource):
+class PassengerDelete(Resource):
     def delete(self, passenger_id):
         try:
             passenger = Passenger.query.get(passenger_id)
@@ -199,9 +199,9 @@ api.add_resource(BusList, '/buses')
 api.add_resource(BusSchedulesList, '/schedules')
 api.add_resource(PassengerList, '/passengers')
 api.add_resource(FavoriteList, '/view_favorites')
-api.add_resource(PassengerFavorites, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
-api.add_resource(PassengerRegistrations, '/passengers') #for posting pasengers
-api.add_resource(PassengerDetail, '/passengers/<int:passenger_id>')
+api.add_resource(PassengerFavorites, '/favorites','/favorites/<int:id>' , '/favorites/<int:passenger_id>/<int:bus_stop_id>')
+api.add_resource(PassengerRegistrations, '/passengers') #for seeing pasengers
+api.add_resource(PassengerDelete, '/passengers/<int:passenger_id>') #for deleting passenger
 
 
 if __name__ == '__main__':
