@@ -96,6 +96,7 @@ class PassengerResource(BaseResource):
         db.session.commit()
         return make_response(jsonify({'message': "Passenger deleted successfully"}), 200)
 
+
 class FavoriteResource(BaseResource):
     model = Favorite
 
@@ -118,13 +119,15 @@ class FavoriteResource(BaseResource):
         return make_response(jsonify(new_favorite.to_dict()), 201)
 
     @handle_errors
-    def delete(self, passenger_id, bus_stop_id):
-        favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
+    def delete(self, id):
+        favorite = Favorite.query.get(id)
         if not favorite:
             return make_response(jsonify({'error': "Favorite not found"}), 404)
         db.session.delete(favorite)
         db.session.commit()
         return make_response(jsonify({'message': "Favorite deleted successfully"}), 200)
+
+  
 
 class PassengerFavorites(Resource):
     @handle_errors
@@ -157,7 +160,7 @@ api.add_resource(BusResource, '/buses', '/buses/<int:id>')
 api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
 api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
 api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
-api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:passenger_id>')
+api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')
 api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 
 if __name__ == '__main__':
