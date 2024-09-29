@@ -1,11 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-import PropTypes from "prop-types";
+import { UserContext } from "../contexts/UserContext";
 
-function BusStopList({ busStops, isLoading }) {
-  if (isLoading) {
-    return <p>Loading bus stops...</p>;
-  }
+function BusStopList({ busStops, onAddToFavorites }) {
+  const { user } = useContext(UserContext);
 
   if (!Array.isArray(busStops) || busStops.length === 0) {
     return <p>No bus stops available.</p>;
@@ -17,24 +15,16 @@ function BusStopList({ busStops, isLoading }) {
         <div key={stop.id} className="bus-stop-card">
           <h3>{stop.name}</h3>
           <p>{stop.location}</p>
-          {stop.nextBus && <p>Next bus: {stop.nextBus}</p>}
           <Link to={`/schedule/${stop.id}`}>View Schedule</Link>
+          {user && (
+            <button onClick={() => onAddToFavorites(stop.id)}>
+              Add to Favorites
+            </button>
+          )}
         </div>
       ))}
     </div>
   );
 }
-
-BusStopList.propTypes = {
-  busStops: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      location: PropTypes.string.isRequired,
-      nextBus: PropTypes.string,
-    })
-  ),
-  isLoading: PropTypes.bool,
-};
 
 export default BusStopList;

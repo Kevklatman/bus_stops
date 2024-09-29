@@ -1,62 +1,67 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { UserContext } from "../contexts/UserContext";
 import BusStopList from "../components/BusStopList";
 
 function BusStops() {
   const [busStops, setBusStops] = useState([]);
-  const [filteredStops, setFilteredStops] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5555";
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
-    setIsLoading(true);
-    fetch(`${API_URL}/bus_stops`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch bus stops");
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setBusStops(data);
-        setFilteredStops(data);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setIsLoading(false);
-      });
-  }, [API_URL]);
+    fetchBusStops();
+  }, []);
 
-  const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
-    const filtered = busStops.filter(
-      (stop) =>
-        stop.name.toLowerCase().includes(term) ||
-        stop.location.toLowerCase().includes(term)
-    );
-    setFilteredStops(filtered);
+  const fetchBusStops = async () => {
+    try {
+      const response = await fetch("/bus_stops");
+      if (!response.ok) {
+        throw new Error("Failed to fetch bus stops");
+      }
+      const data = await response.json();
+      setBusStops(data);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  const handleAddToFavorites = async (busStopId) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch("/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          passenger_id: user.id,
+          bus_stop_id: busStopId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add to favorites");
+      }
+
+      alert("Added to favorites successfully!");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="bus-stops">
       <h2>Bus Stops</h2>
-      <input
-        type="text"
-        placeholder="Search bus stops..."
-        value={searchTerm}
-        onChange={handleSearch}
+      <BusStopList
+        busStops={busStops}
+        onAddToFavorites={handleAddToFavorites}
       />
-      {filteredStops.length > 0 ? (
-        <BusStopList busStops={filteredStops} />
-      ) : (
-        <p>No bus stops found.</p>
-      )}
     </div>
   );
 }
