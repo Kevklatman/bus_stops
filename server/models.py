@@ -85,7 +85,7 @@ class Favorite(db.Model, SerializerMixin):
     bus_stop = db.relationship('BusStop', back_populates='favorites')
 
     serialize_rules = ('-passenger.favorites', '-bus_stop.favorites')
-
+    serialize_only = ('passenger_id', 'bus_stop_id', 'created_at')
     def __repr__(self):
         return f"<Favorite {self.id}, {self.passenger_id}, {self.created_at}>"
 

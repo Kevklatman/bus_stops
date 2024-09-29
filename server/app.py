@@ -83,7 +83,6 @@ class PassengerFavorites(Resource):
         try:
             passenger_id = data['passenger_id']
             bus_stop_id = data['bus_stop_id']
-            created_at = datetime.fromisoformat(data['created_at'])
 
             # passenger exists?
             passenger = Passenger.query.get(passenger_id)
@@ -103,8 +102,7 @@ class PassengerFavorites(Resource):
             new_favorite_stop = Favorite(
                 passenger_id=passenger_id,
                 bus_stop_id=bus_stop_id,
-                created_at=created_at
-            )
+                created_at=datetime.utcnow())
             db.session.add(new_favorite_stop)
             db.session.commit()
             response_data = new_favorite_stop.to_dict()
