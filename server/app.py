@@ -23,25 +23,25 @@ class BusStopList(Resource):
     def get(self):
         bus_stops = BusStop.query.all()
         return [bus_stop.to_dict() for bus_stop in bus_stops]
-    
+
 class BusList(Resource):
     def get(self):
         buses = Bus.query.all()
         return [bus.to_dict() for bus in buses]
-    
+
 class BusSchedulesList(Resource):
     def get(self):
         schedules = Schedule.query.all()
         return [schedule.to_dict() for schedule in schedules]
-    
+
 class PassengerList(Resource):
     def get(self):
         passengers = Passenger.query.all()
         return [passenger.to_dict() for passenger in passengers]
-    
-    
+
+
 #method classes
-   
+
 class PassengerFavorites(Resource):
     def get(self, id):
         passenger = Passenger.query.get(id)
@@ -54,11 +54,11 @@ class PassengerFavorites(Resource):
                 'email': passenger_data['email'],
                 'passenger_favorites': []
             }
-            
+
             for favorite in passenger.favorites:
                 bus_stop = favorite.bus_stop
                 bus_stop_data = bus_stop.to_dict()
-                
+
                 favorite_data = {
                     'id': favorite.id,
                     'bus_stop_id': favorite.bus_stop_id,
@@ -66,9 +66,9 @@ class PassengerFavorites(Resource):
                     'bus_stop_location': bus_stop_data['location'],
                     'created_at': favorite.created_at.isoformat()
                 }
-                
+
                 response_data['passenger_favorites'].append(favorite_data)
-            
+
             return response_data, 200
         else:
             return {'error': 'Passenger not found'}, 404
@@ -114,7 +114,7 @@ class PassengerFavorites(Resource):
         except Exception as e:
             db.session.rollback()
             return make_response({"errors": [str(e)]}, 500)
-        
+
     def delete(self, passenger_id, bus_stop_id):
         try:
             # passenger exists
@@ -139,7 +139,7 @@ class PassengerFavorites(Resource):
         except Exception as e:
             db.session.rollback()
             return make_response({"errors": [str(e)]}, 500)
-    
+
 
 class PassengerRegistrations(Resource):
     def post(self):
@@ -176,6 +176,7 @@ class PassengerRegistrations(Resource):
             db.session.rollback()
             return make_response({"errors": [str(e)]}, 500)
 
+class PassengerDetail(Resource):
     def delete(self, passenger_id):
         try:
             passenger = Passenger.query.get(passenger_id)
@@ -189,7 +190,6 @@ class PassengerRegistrations(Resource):
         except Exception as e:
             db.session.rollback()
             return make_response({"errors": [str(e)]}, 500)
-    
 
 
 api.add_resource(BusStopList, '/bus_stops')
@@ -197,10 +197,9 @@ api.add_resource(BusList, '/buses')
 api.add_resource(BusSchedulesList, '/schedules')
 api.add_resource(PassengerList, '/passengers')
 api.add_resource(PassengerFavorites, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
-api.add_resource(PassengerRegistrations, '/passengers/register', '/passengers/<int:passenger_id>')
+api.add_resource(PassengerRegistrations, '/passengers')
+api.add_resource(PassengerDetail, '/passengers/<int:passenger_id>')
 
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-
-#
