@@ -165,3 +165,37 @@ api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
+
+'''
+BaseResource:
+    GET (for both listing all and getting a single item by ID)
+BusResource (inherits from BaseResource):
+    GET (inherited)
+BusStopResource (inherits from BaseResource):
+    GET (inherited)
+    POST (create a new bus stop)
+ScheduleResource (inherits from BaseResource):
+    GET (inherited)
+    POST (create a new schedule)
+PassengerResource (inherits from BaseResource):
+    GET (inherited)
+    POST (create a new passenger)
+    DELETE (delete a passenger by ID)
+FavoriteResource (inherits from BaseResource):
+    GET (inherited)
+    POST (create a new favorite)
+    DELETE (delete a favorite by ID)
+PassengerFavorites:
+    GET (retrieve favorites for a specific passenger)
+
+HTTP methods available for each endpoint:
+
+/buses and /buses/int:id: GET
+/bus_stops and /bus_stops/int:id: GET, POST
+/schedules and /schedules/int:id: GET, POST
+/passengers and /passengers/int:id: GET, POST, DELETE
+/favorites and /favorites/int:id: GET, POST, DELETE
+/passenger_favorites/int:id: GET
+'''
+
