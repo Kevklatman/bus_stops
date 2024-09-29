@@ -38,6 +38,11 @@ class PassengerList(Resource):
     def get(self):
         passengers = Passenger.query.all()
         return [passenger.to_dict() for passenger in passengers]
+    
+class FavoriteList(Resource):
+    def get(self):
+        favorites = Favorite.query.all()
+        return [favorite.to_dict() for favorite in favorites]
 
 
 #method classes
@@ -195,6 +200,7 @@ api.add_resource(BusStopList, '/bus_stops')
 api.add_resource(BusList, '/buses')
 api.add_resource(BusSchedulesList, '/schedules')
 api.add_resource(PassengerList, '/passengers')
+api.add_resource(FavoriteList, '/view_favorites')
 api.add_resource(PassengerFavorites, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
 api.add_resource(PassengerRegistrations, '/passengers') #for posting pasengers
 api.add_resource(PassengerDetail, '/passengers/<int:passenger_id>')
