@@ -159,6 +159,6 @@ api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
 api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
 api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
 api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
-
+#
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
