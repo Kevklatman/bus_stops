@@ -4,7 +4,7 @@ import Header from "./Header";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
 import Home from "../pages/Home";
-import Login from "../pages/Login";
+import LoginAndRegister from "../pages/Login";
 import Profile from "../pages/Profile";
 import Favorites from "../pages/Favorites";
 import BusStops from "../pages/BusStops";
@@ -22,7 +22,7 @@ function App() {
           <main>
             <Switch>
               <Route exact path="/" component={Home} />
-              <Route path="/login" component={Login} />
+              <Route path="/login" component={LoginAndRegister} />
               <Route path="/profile" component={Profile} />
               <Route path="/favorites" component={Favorites} />
               <Route path="/bus-stops" component={BusStops} />
