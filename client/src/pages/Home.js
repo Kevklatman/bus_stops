@@ -4,13 +4,23 @@ import { UserContext } from "../contexts/UserContext";
 
 function Home() {
   const [busStops, setBusStops] = useState([]);
+  const [filteredBusStops, setFilteredBusStops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
   const { user } = useContext(UserContext);
 
   useEffect(() => {
     fetchBusStops();
   }, []);
+
+  useEffect(() => {
+    setFilteredBusStops(
+      busStops.filter((stop) =>
+        stop.name.toLowerCase().includes(search.toLowerCase())
+      )
+    );
+  }, [search, busStops]);
 
   const fetchBusStops = async () => {
     try {
@@ -20,6 +30,7 @@ function Home() {
       }
       const data = await response.json();
       setBusStops(data);
+      setFilteredBusStops(data);
       setLoading(false);
     } catch (err) {
       setError(err.message);
@@ -39,7 +50,7 @@ function Home() {
       if (!response.ok) {
         throw new Error("Failed to add comment");
       }
-      fetchBusStops(); // Refresh the bus stops to show the new comment
+      fetchBusStops();
     } catch (err) {
       setError(err.message);
     }
@@ -51,9 +62,17 @@ function Home() {
   return (
     <div className="home">
       <h2>Welcome to NYC Bus Stop</h2>
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search bus stops..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
       <p>Manage your bus routes and stops efficiently</p>
       <div className="bus-stops-list">
-        {busStops.map((stop) => (
+        {filteredBusStops.map((stop) => (
           <div key={stop.id} className="bus-stop-card">
             <h3>{stop.name}</h3>
             <p>{stop.location}</p>
