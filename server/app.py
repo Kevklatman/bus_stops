@@ -126,7 +126,13 @@ class PassengerResource(Resource):
 
     def post(self):
         data = request.get_json()
-        new_passenger = Passenger(**data)
+        hashed_password = generate_password_hash(data['password'])
+        new_passenger = Passenger(
+            name=data['name'],
+            email=data['email'],
+            password=hashed_password,
+            is_admin=data.get('is_admin', False)  # Default to False if not provided
+        )
         
         try:
             db.session.add(new_passenger)
@@ -134,7 +140,10 @@ class PassengerResource(Resource):
             return make_response(jsonify(new_passenger.to_dict()), 201)
         except IntegrityError:
             db.session.rollback()
-            return make_response(jsonify({'error': "Passenger already exists"}), 409)
+            return make_response(jsonify({'error': "Email already exists"}), 409)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 400)
 
     def patch(self, id):
         passenger = Passenger.query.get(id)
@@ -143,6 +152,8 @@ class PassengerResource(Resource):
         
         data = request.get_json()
         for key, value in data.items():
+            if key == 'password':
+                value = generate_password_hash(value)
             setattr(passenger, key, value)
         
         try:
@@ -159,7 +170,7 @@ class PassengerResource(Resource):
         db.session.delete(passenger)
         db.session.commit()
         return make_response(jsonify({'message': "Passenger deleted successfully"}), 200)
-
+    
 class FavoriteResource(Resource):
     def get(self, id=None):
         if id:
@@ -260,9 +271,14 @@ class LoginResource(Resource):
         passenger = Passenger.query.filter_by(email=email).first()
         if passenger and check_password_hash(passenger.password, password):
             login_user(passenger)
-            return make_response(jsonify({'id': passenger.id, 'email': passenger.email, 'is_admin': passenger.is_admin}), 200)
+            return make_response(jsonify({
+                'id': passenger.id, 
+                'email': passenger.email, 
+                'name': passenger.name,
+                'is_admin': passenger.is_admin
+            }), 200)
         else:
-            return make_response(jsonify({'error': 'Invalid credentials'}), 401)
+            return make_response(jsonify({'error': 'Invalid email or password'}), 401)
         
 class LogoutResource(Resource):
     @login_required

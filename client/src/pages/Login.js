@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { UserContext } from "../contexts/UserContext";
@@ -20,8 +20,9 @@ const RegisterSchema = Yup.object().shape({
 function LoginAndRegister() {
   const { login } = useContext(UserContext);
   const history = useHistory();
+  const [error, setError] = useState(null);
 
-  const handleLogin = async (values, { setSubmitting, setErrors }) => {
+  const handleLogin = async (values, { setSubmitting }) => {
     try {
       const response = await fetch("/login", {
         method: "POST",
@@ -31,37 +32,37 @@ function LoginAndRegister() {
         body: JSON.stringify(values),
       });
       if (!response.ok) {
-        throw new Error("Login failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Login failed");
       }
       const userData = await response.json();
       login(userData);
       history.push("/");
     } catch (error) {
-      setErrors({ submit: error.message });
+      setError(error.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleRegister = async (values, { setSubmitting, setErrors }) => {
+  const handleRegister = async (values, { setSubmitting }) => {
     try {
       const response = await fetch("/passengers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, is_admin: false }),
       });
       if (!response.ok) {
-        throw new Error("Registration failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Registration failed");
       }
       const userData = await response.json();
       alert("Registration successful! Please log in.");
-      // Optionally, you can automatically log the user in here
-      // login(userData);
-      // history.push('/');
+      history.push("/login");
     } catch (error) {
-      setErrors({ submit: error.message });
+      setError(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -69,6 +70,7 @@ function LoginAndRegister() {
 
   return (
     <div className="login-register">
+      {error && <div className="error">{error}</div>}
       <div className="login-form">
         <h2>Login</h2>
         <Formik
@@ -76,7 +78,7 @@ function LoginAndRegister() {
           validationSchema={LoginSchema}
           onSubmit={handleLogin}
         >
-          {({ isSubmitting, errors }) => (
+          {({ isSubmitting }) => (
             <Form>
               <div>
                 <label htmlFor="loginEmail">Email</label>
@@ -92,7 +94,6 @@ function LoginAndRegister() {
                   className="error"
                 />
               </div>
-              {errors.submit && <div className="error">{errors.submit}</div>}
               <button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Logging in..." : "Login"}
               </button>
@@ -108,7 +109,7 @@ function LoginAndRegister() {
           validationSchema={RegisterSchema}
           onSubmit={handleRegister}
         >
-          {({ isSubmitting, errors }) => (
+          {({ isSubmitting }) => (
             <Form>
               <div>
                 <label htmlFor="registerName">Name</label>
@@ -129,7 +130,6 @@ function LoginAndRegister() {
                   className="error"
                 />
               </div>
-              {errors.submit && <div className="error">{errors.submit}</div>}
               <button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Registering..." : "Register"}
               </button>
