@@ -1,208 +1,164 @@
 #!/usr/bin/env python3
 
-# Standard library imports
-
-# Remote library imports
-from flask import request, make_response
-from flask_restful import Resource
+from flask import make_response
+from flask_restful import Resource, reqparse
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 
-# Local imports
 from config import app, db, api
-# Add your model imports
-from models import *
-
-# Views go here!
+from models import Bus, Passenger, BusStop, Favorite, Schedule
 
 @app.route('/')
 def index():
     return '<h1>Project Server</h1>'
 
-class BusStopList(Resource):
-    def get(self):
-        bus_stops = BusStop.query.all()
-        return [bus_stop.to_dict() for bus_stop in bus_stops]
+def handle_errors(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except AssertionError as e:
+            return {'error': str(e)}, 400
+        except ValueError as e:
+            return {'error': str(e)}, 400
+        except IntegrityError:
+            db.session.rollback()
+            return {'error': "Resource already exists"}, 409
+        except Exception as e:
+            db.session.rollback()
+            return {'error': str(e)}, 500
+    return wrapper
 
-class BusList(Resource):
-    def get(self):
-        buses = Bus.query.all()
-        return [bus.to_dict() for bus in buses]
+class BaseResource(Resource):
+    @handle_errors
+    def get(self, id=None):
+        if id:
+            instance = self.model.query.get(id)
+            return instance.to_dict() if instance else ({'error': f"{self.model.__name__} not found"}, 404)
+        instances = self.model.query.all()
+        return [instance.to_dict() for instance in instances]
 
-class BusSchedulesList(Resource):
-    def get(self):
-        schedules = Schedule.query.all()
-        return [schedule.to_dict() for schedule in schedules]
+class BusResource(BaseResource):
+    model = Bus
 
-class PassengerList(Resource):
-    def get(self):
-        passengers = Passenger.query.all()
-        return [passenger.to_dict() for passenger in passengers]
-    
-class FavoriteList(Resource):
-    def get(self):
-        favorites = Favorite.query.all()
-        return [favorite.to_dict() for favorite in favorites]
+class BusStopResource(BaseResource):
+    model = BusStop
 
+    @handle_errors
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str, required=True)
+        parser.add_argument('location', type=str, required=True)
+        args = parser.parse_args()
 
-#method classes
+        new_bus_stop = BusStop(**args)
+        db.session.add(new_bus_stop)
+        db.session.commit()
+        return new_bus_stop.to_dict(), 201
+
+class ScheduleResource(BaseResource):
+    model = Schedule
+
+    @handle_errors
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('bus_id', type=int, required=True)
+        parser.add_argument('bus_stop_id', type=int, required=True)
+        parser.add_argument('arrival_time', type=lambda x: datetime.fromisoformat(x), required=True)
+        parser.add_argument('departure_time', type=lambda x: datetime.fromisoformat(x), required=True)
+        args = parser.parse_args()
+
+        new_schedule = Schedule(**args)
+        db.session.add(new_schedule)
+        db.session.commit()
+        return new_schedule.to_dict(), 201
+
+class PassengerResource(BaseResource):
+    model = Passenger
+
+    @handle_errors
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str, required=True)
+        parser.add_argument('email', type=str, required=True)
+        args = parser.parse_args()
+
+        new_passenger = Passenger(**args)
+        db.session.add(new_passenger)
+        db.session.commit()
+        return new_passenger.to_dict(), 201
+
+    @handle_errors
+    def delete(self, id):
+        passenger = Passenger.query.get(id)
+        if not passenger:
+            return {'error': "Passenger not found"}, 404
+        db.session.delete(passenger)
+        db.session.commit()
+        return {'message': "Passenger deleted successfully"}, 200
+
+class FavoriteResource(BaseResource):
+    model = Favorite
+
+    @handle_errors
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('passenger_id', type=int, required=True)
+        parser.add_argument('bus_stop_id', type=int, required=True)
+        args = parser.parse_args()
+
+        passenger = Passenger.query.get(args['passenger_id'])
+        bus_stop = BusStop.query.get(args['bus_stop_id'])
+
+        if not passenger or not bus_stop:
+            return {'error': "Passenger or Bus Stop not found"}, 404
+
+        new_favorite = Favorite(**args)
+        db.session.add(new_favorite)
+        db.session.commit()
+        return new_favorite.to_dict(), 201
+
+    @handle_errors
+    def delete(self, passenger_id, bus_stop_id):
+        favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
+        if not favorite:
+            return {'error': "Favorite not found"}, 404
+        db.session.delete(favorite)
+        db.session.commit()
+        return {'message': "Favorite deleted successfully"}, 200
 
 class PassengerFavorites(Resource):
+    @handle_errors
     def get(self, id):
         passenger = Passenger.query.get(id)
-        if passenger:
-            passenger_data = passenger.to_dict()
-
-            response_data = {
-                'id': passenger_data['id'],
-                'name': passenger_data['name'],
-                'email': passenger_data['email'],
-                'passenger_favorites': []
-            }
-
-            for favorite in passenger.favorites:
-                bus_stop = favorite.bus_stop
-                bus_stop_data = bus_stop.to_dict()
-
-                favorite_data = {
-                    'id': favorite.id,
-                    'bus_stop_id': favorite.bus_stop_id,
-                    'bus_stop_name': bus_stop_data['name'],
-                    'bus_stop_location': bus_stop_data['location'],
-                    'created_at': favorite.created_at.isoformat()
-                }
-
-                response_data['passenger_favorites'].append(favorite_data)
-
-            return response_data, 200
-        else:
+        if not passenger:
             return {'error': 'Passenger not found'}, 404
 
-    def post(self):
-        data = request.get_json()
-        try:
-            passenger_id = data['passenger_id']
-            bus_stop_id = data['bus_stop_id']
+        response_data = {
+            'id': passenger.id,
+            'name': passenger.name,
+            'email': passenger.email,
+            'passenger_favorites': []
+        }
 
-            # passenger exists?
-            passenger = Passenger.query.get(passenger_id)
-            if not passenger:
-                return make_response({"errors": ["Passenger not found"]}, 404)
+        for favorite in passenger.favorites:
+            bus_stop = favorite.bus_stop
+            favorite_data = {
+                'id': favorite.id,
+                'bus_stop_id': favorite.bus_stop_id,
+                'bus_stop_name': bus_stop.name,
+                'bus_stop_location': bus_stop.location,
+                'created_at': favorite.created_at.isoformat()
+            }
+            response_data['passenger_favorites'].append(favorite_data)
 
-            # stop exists?
-            bus_stop = BusStop.query.get(bus_stop_id)
-            if not bus_stop:
-                return make_response({"errors": ["Bus stop not found"]}, 404)
+        return response_data, 200
 
-            # is duplicate?
-            existing_favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
-            if existing_favorite:
-                return make_response({"errors": ["Favorite already exists"]}, 409)
-
-            new_favorite_stop = Favorite(
-                passenger_id=passenger_id,
-                bus_stop_id=bus_stop_id,
-                created_at=datetime.utcnow())
-            db.session.add(new_favorite_stop)
-            db.session.commit()
-            response_data = new_favorite_stop.to_dict()
-            return make_response(response_data, 201)
-
-        except KeyError as e:
-            return make_response({"errors": [f"Missing field: {str(e)}"]}, 400)
-        except ValueError as e:
-            return make_response({"errors": [str(e)]}, 400)
-        except AssertionError as e:
-            return make_response({"errors": [str(e)]}, 400)
-        except Exception as e:
-            db.session.rollback()
-            return make_response({"errors": [str(e)]}, 500)
-
-    def delete(self, passenger_id, bus_stop_id):
-        try:
-            # passenger exists
-            passenger = Passenger.query.get(passenger_id)
-            if not passenger:
-                return make_response({"errors": ["Passenger not found"]}, 404)
-
-            # stop exists?
-            bus_stop = BusStop.query.get(bus_stop_id)
-            if not bus_stop:
-                return make_response({"errors": ["Bus stop not found"]}, 404)
-
-            # fave exists?
-            favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
-            if not favorite:
-                return make_response({"errors": ["Favorite not found"]}, 404)
-
-            db.session.delete(favorite)
-            db.session.commit()
-            return make_response({"message": "Favorite deleted successfully"}, 200)
-
-        except Exception as e:
-            db.session.rollback()
-            return make_response({"errors": [str(e)]}, 500)
-
-
-class PassengerRegistrations(Resource):
-    def post(self):
-        data = request.get_json()
-        try:
-            name = data['name']
-            email = data['email']
-
-            # email exists?
-            existing_passenger = Passenger.query.filter_by(email=email).first()
-            if existing_passenger:
-                return make_response({"errors": ["Passenger with this email already exists"]}, 409)
-
-            new_passenger = Passenger(
-                name=name,
-                email=email,
-                created_at=datetime.utcnow()  # Set created_at to the current timestamp
-            )
-            db.session.add(new_passenger)
-            db.session.commit()
-
-            response_data = new_passenger.to_dict()
-            return make_response(response_data, 201)
-
-        except KeyError as e:
-            return make_response({"errors": [f"Missing field: {str(e)}"]}, 400)
-        except ValueError as e:
-            return make_response({"errors": [str(e)]}, 400)
-        except IntegrityError as e:
-            db.session.rollback()
-            return make_response({"errors": ["Passenger with this email already exists"]}, 409)
-        except Exception as e:
-            db.session.rollback()
-            return make_response({"errors": [str(e)]}, 500)
-
-class PassengerDetail(Resource):
-    def delete(self, passenger_id):
-        try:
-            passenger = Passenger.query.get(passenger_id)
-            if not passenger:
-                return make_response({"errors": ["Passenger not found"]}, 404)
-
-            db.session.delete(passenger)
-            db.session.commit()
-            return make_response({"message": "Passenger deleted successfully"}, 200)
-
-        except Exception as e:
-            db.session.rollback()
-            return make_response({"errors": [str(e)]}, 500)
-
-
-api.add_resource(BusStopList, '/bus_stops')
-api.add_resource(BusList, '/buses')
-api.add_resource(BusSchedulesList, '/schedules')
-api.add_resource(PassengerList, '/passengers')
-api.add_resource(FavoriteList, '/view_favorites')
-api.add_resource(PassengerFavorites, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
-api.add_resource(PassengerRegistrations, '/passengers') #for posting pasengers
-api.add_resource(PassengerDetail, '/passengers/<int:passenger_id>')
-
+api.add_resource(BusResource, '/buses', '/buses/<int:id>')
+api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
+api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
+api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
+api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
+api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
