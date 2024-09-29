@@ -147,7 +147,6 @@ class PassengerRegistrations(Resource):
         try:
             name = data['name']
             email = data['email']
-            created_at = datetime.fromisoformat(data['created_at'])
 
             # email exists?
             existing_passenger = Passenger.query.filter_by(email=email).first()
@@ -157,7 +156,7 @@ class PassengerRegistrations(Resource):
             new_passenger = Passenger(
                 name=name,
                 email=email,
-                created_at=created_at
+                created_at=datetime.utcnow()  # Set created_at to the current timestamp
             )
             db.session.add(new_passenger)
             db.session.commit()
@@ -197,7 +196,7 @@ api.add_resource(BusList, '/buses')
 api.add_resource(BusSchedulesList, '/schedules')
 api.add_resource(PassengerList, '/passengers')
 api.add_resource(PassengerFavorites, '/favorites', '/favorites/<int:id>', '/favorites/<int:passenger_id>/<int:bus_stop_id>')
-api.add_resource(PassengerRegistrations, '/passengers')
+api.add_resource(PassengerRegistrations, '/passengers') #for posting pasengers
 api.add_resource(PassengerDetail, '/passengers/<int:passenger_id>')
 
 
