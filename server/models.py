@@ -105,7 +105,6 @@ class Schedule(db.Model, SerializerMixin):
     serialize_rules = ('-bus.schedules', '-bus_stop.schedules')
     serialize_only = ('id', 'bus_id', 'bus_stop_id', 'arrival_time', 'departure_time', 'created_at')
 
-    __table_args__ = (db.UniqueConstraint("bus_id", "arrival_time", "bus_stop_id"),)
 
     @validates("arrival_time", "departure_time")
     def validate_times(self, key, time):
