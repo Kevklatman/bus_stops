@@ -1,10 +1,83 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { Link } from "react-router-dom";
+import { UserContext } from "../contexts/UserContext";
 
 function Home() {
+  const [busStops, setBusStops] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user } = useContext(UserContext);
+
+  useEffect(() => {
+    fetchBusStops();
+  }, []);
+
+  const fetchBusStops = async () => {
+    try {
+      const response = await fetch("/bus_stops");
+      if (!response.ok) {
+        throw new Error("Failed to fetch bus stops");
+      }
+      const data = await response.json();
+      setBusStops(data);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const addComment = async (stopId, comment) => {
+    try {
+      const response = await fetch(`/bus_stops/${stopId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ comments: comment }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to add comment");
+      }
+      fetchBusStops(); // Refresh the bus stops to show the new comment
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
     <div className="home">
-      <h2>Welcome to NYC Bus Stop Management System</h2>
-      <p>Find bus stops, check schedules, and manage your favorites.</p>
+      <h2>Welcome to NYC Bus Stop</h2>
+      <p>Manage your bus routes and stops efficiently</p>
+      <div className="bus-stops-list">
+        {busStops.map((stop) => (
+          <div key={stop.id} className="bus-stop-card">
+            <h3>{stop.name}</h3>
+            <p>{stop.location}</p>
+            <Link to={`/schedule/${stop.id}`}>View Schedule</Link>
+            <div className="comments-section">
+              <h4>Comments:</h4>
+              <p>{stop.comments || "No comments yet."}</p>
+              {user && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const comment = e.target.comment.value;
+                    addComment(stop.id, comment);
+                    e.target.comment.value = "";
+                  }}
+                >
+                  <textarea name="comment" required></textarea>
+                  <button type="submit">Add Comment</button>
+                </form>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
