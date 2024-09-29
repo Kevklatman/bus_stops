@@ -45,7 +45,7 @@ function LoginAndRegister() {
     }
   };
 
-  const handleRegister = async (values, { setSubmitting }) => {
+  const handleRegister = async (values, { setSubmitting, resetForm }) => {
     try {
       const response = await fetch("/passengers", {
         method: "POST",
@@ -60,6 +60,7 @@ function LoginAndRegister() {
       }
       const userData = await response.json();
       alert("Registration successful! Please log in.");
+      resetForm();
       history.push("/login");
     } catch (error) {
       setError(error.message);
