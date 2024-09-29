@@ -4,7 +4,7 @@ import Header from "./Header";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
 import Home from "../pages/Home";
-import LoginAndRegister from "../pages/Login";
+import LoginAndRegister from "../pages/LoginAndRegister";
 import Profile from "../pages/Profile";
 import Favorites from "../pages/Favorites";
 import BusStops from "../pages/BusStops";
