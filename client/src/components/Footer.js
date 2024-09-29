@@ -3,7 +3,7 @@ import React from "react";
 function Footer() {
   return (
     <footer>
-      <p>&copy; 2023 Bus Stop Management System</p>
+      <p>&copy; 2025 Bus Stop Management System</p>
     </footer>
   );
 }
