@@ -4,19 +4,21 @@ import "./NavBar.css";
 
 function NavBar() {
   return (
-    <header className="navbar">
-      <NavLink to="/" className="button">
-        Home
-      </NavLink>
-
-      <NavLink to="/FavoritePage" className="button">
-        Favorite Stops
-      </NavLink>
-
-      <NavLink to="/BustStopManagement" className="button">
-        Bust Stop Management 
-      </NavLink>
-    </header>
+    <nav className="navbar">
+    <ul>
+      <li><NavLink to="/">Home</NavLink></li>
+      <li><NavLink to="/bus-stops">Bus Stops</NavLink></li>
+      {user ? (
+        <>
+          <li><NavLink to="/favorites">Favorites</NavLink></li>
+          <li><NavLink to="/profile">Profile</NavLink></li>
+          <li><button onClick={logout}>Logout</button></li>
+        </>
+      ) : (
+        <li><NavLink to="/login">Login</NavLink></li>
+      )}
+    </ul>
+  </nav>
   );
 }
 export default NavBar;
