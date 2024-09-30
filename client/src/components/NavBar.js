@@ -5,15 +5,15 @@ import "./NavBar.css";
 function NavBar() {
   return (
     <header className="navbar">
-      <NavLink to={"/"} className="button">
+      <NavLink to="/" className="button">
         Home
       </NavLink>
 
-      <NavLink to={"/FavoritePage"} className="button">
+      <NavLink to="/FavoritePage" className="button">
         Favorite Stops
       </NavLink>
 
-      <NavLink to={"/BustStopManagement "} className="button">
+      <NavLink to="/BustStopManagement" className="button">
         Bust Stop Management 
       </NavLink>
     </header>
