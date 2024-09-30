@@ -1,6 +1,6 @@
 #app.py
-from flask import make_response, jsonify
-from flask_restful import Resource, reqparse
+from flask import make_response, jsonify, request
+from flask_restful import Resource
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 
@@ -11,84 +11,74 @@ from models import Bus, Passenger, BusStop, Favorite, Schedule
 def index():
     return '<h1>Project Server</h1>'
 
-def handle_errors(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except AssertionError as e:
-            return make_response(jsonify({'error': str(e)}), 400)
-        except ValueError as e:
-            return make_response(jsonify({'error': str(e)}), 400)
-        except IntegrityError:
-            db.session.rollback()
-            return make_response(jsonify({'error': "Resource already exists"}), 409)
-        except Exception as e:
-            db.session.rollback()
-            return make_response(jsonify({'error': str(e)}), 500)
-    return wrapper
-
-class BaseResource(Resource):
-    @handle_errors
+class BusResource(Resource):
     def get(self, id=None):
         if id:
-            instance = self.model.query.get(id)
-            if instance:
-                return make_response(jsonify(instance.to_dict()), 200)
-            return make_response(jsonify({'error': f"{self.model.__name__} not found"}), 404)
-        instances = self.model.query.all()
-        return make_response(jsonify([instance.to_dict() for instance in instances]), 200)
+            bus = Bus.query.get(id)
+            if bus:
+                return make_response(jsonify(bus.to_dict()), 200)
+            return make_response(jsonify({'error': "Bus not found"}), 404)
+        buses = Bus.query.all()
+        return make_response(jsonify([bus.to_dict() for bus in buses]), 200)
 
-class BusResource(BaseResource):
-    model = Bus
+class BusStopResource(Resource):
+    def get(self, id=None):
+        if id:
+            bus_stop = BusStop.query.get(id)
+            if bus_stop:
+                return make_response(jsonify(bus_stop.to_dict()), 200)
+            return make_response(jsonify({'error': "Bus Stop not found"}), 404)
+        bus_stops = BusStop.query.all()
+        return make_response(jsonify([bus_stop.to_dict() for bus_stop in bus_stops]), 200)
 
-class BusStopResource(BaseResource):
-    model = BusStop
-
-    @handle_errors
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name', )
-        parser.add_argument('location')
-        args = parser.parse_args()
-
-        new_bus_stop = BusStop(**args)
+        data = request.get_json()
+        new_bus_stop = BusStop(**data)
         db.session.add(new_bus_stop)
         db.session.commit()
         return make_response(jsonify(new_bus_stop.to_dict()), 201)
 
-class ScheduleResource(BaseResource):
-    model = Schedule
+class ScheduleResource(Resource):
+    def get(self, id=None):
+        if id:
+            schedule = Schedule.query.get(id)
+            if schedule:
+                return make_response(jsonify(schedule.to_dict()), 200)
+            return make_response(jsonify({'error': "Schedule not found"}), 404)
+        schedules = Schedule.query.all()
+        return make_response(jsonify([schedule.to_dict() for schedule in schedules]), 200)
 
-    @handle_errors
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('bus_id')
-        parser.add_argument('bus_stop_id')
-        parser.add_argument('arrival_time', type=lambda x: datetime.fromisoformat(x), required=True)
-        parser.add_argument('departure_time', type=lambda x: datetime.fromisoformat(x), required=True)
-        args = parser.parse_args()
-
-        new_schedule = Schedule(**args)
+        data = request.get_json()
+        data['arrival_time'] = datetime.fromisoformat(data['arrival_time'])
+        data['departure_time'] = datetime.fromisoformat(data['departure_time'])
+        new_schedule = Schedule(**data)
         db.session.add(new_schedule)
         db.session.commit()
         return make_response(jsonify(new_schedule.to_dict()), 201)
 
-class PassengerResource(BaseResource):
-    model = Passenger
+class PassengerResource(Resource):
+    def get(self, id=None):
+        if id:
+            passenger = Passenger.query.get(id)
+            if passenger:
+                return make_response(jsonify(passenger.to_dict()), 200)
+            return make_response(jsonify({'error': "Passenger not found"}), 404)
+        passengers = Passenger.query.all()
+        return make_response(jsonify([passenger.to_dict() for passenger in passengers]), 200)
 
-    @handle_errors
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name')
-        parser.add_argument('email')
-        args = parser.parse_args()
+        data = request.get_json()
+        new_passenger = Passenger(**data)
+        
+        try:
+            db.session.add(new_passenger)
+            db.session.commit()
+            return make_response(jsonify(new_passenger.to_dict()), 201)
+        except IntegrityError:
+            db.session.rollback()
+            return make_response(jsonify({'error': "Passenger already exists"}), 409)
 
-        new_passenger = Passenger(**args)
-        db.session.add(new_passenger)
-        db.session.commit()
-        return make_response(jsonify(new_passenger.to_dict()), 201)
-
-    @handle_errors
     def delete(self, id):
         passenger = Passenger.query.get(id)
         if not passenger:
@@ -97,33 +87,34 @@ class PassengerResource(BaseResource):
         db.session.commit()
         return make_response(jsonify({'message': "Passenger deleted successfully"}), 200)
 
+class FavoriteResource(Resource):
+    def get(self, id=None):
+        if id:
+            favorite = Favorite.query.get(id)
+            if favorite:
+                return make_response(jsonify(favorite.to_dict()), 200)
+            return make_response(jsonify({'error': "Favorite not found"}), 404)
+        favorites = Favorite.query.all()
+        return make_response(jsonify([favorite.to_dict() for favorite in favorites]), 200)
 
-class FavoriteResource(BaseResource):
-    model = Favorite
-
-    @handle_errors
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('passenger_id')
-        parser.add_argument('bus_stop_id')
-        args = parser.parse_args()
+        data = request.get_json()
 
-        passenger = Passenger.query.get(args['passenger_id'])
-        bus_stop = BusStop.query.get(args['bus_stop_id'])
+        passenger = Passenger.query.get(data['passenger_id'])
+        bus_stop = BusStop.query.get(data['bus_stop_id'])
 
         if not passenger or not bus_stop:
             return make_response(jsonify({'error': "Passenger or Bus Stop not found"}), 404)
 
-        existing_favorite = Favorite.query.filter_by(passenger_id=args['passenger_id'], bus_stop_id=args['bus_stop_id']).first()
+        existing_favorite = Favorite.query.filter_by(passenger_id=data['passenger_id'], bus_stop_id=data['bus_stop_id']).first()
         if existing_favorite:
             return make_response(jsonify({'error': "Favorite already exists"}), 409)
 
-        new_favorite = Favorite(**args)
+        new_favorite = Favorite(**data)
         db.session.add(new_favorite)
         db.session.commit()
         return make_response(jsonify(new_favorite.to_dict()), 201)
 
-    @handle_errors
     def delete(self, id):
         favorite = Favorite.query.get(id)
         if not favorite:
@@ -132,10 +123,7 @@ class FavoriteResource(BaseResource):
         db.session.commit()
         return make_response(jsonify({'message': "Favorite deleted successfully"}), 200)
 
-  
-
 class PassengerFavorites(Resource):
-    @handle_errors
     def get(self, id):
         passenger = Passenger.query.get(id)
         if not passenger:
@@ -170,37 +158,3 @@ api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-
-
-'''
-BaseResource:
-    GET (for both listing all and getting a single item by ID)
-BusResource (inherits from BaseResource):
-    GET (inherited)
-BusStopResource (inherits from BaseResource):
-    GET (inherited)
-    POST (create a new bus stop)
-ScheduleResource (inherits from BaseResource):
-    GET (inherited)
-    POST (create a new schedule)
-PassengerResource (inherits from BaseResource):
-    GET (inherited)
-    POST (create a new passenger)
-    DELETE (delete a passenger by ID)
-FavoriteResource (inherits from BaseResource):
-    GET (inherited)
-    POST (create a new favorite)
-    DELETE (delete a favorite by ID)
-PassengerFavorites:
-    GET (retrieve favorites for a specific passenger)
-
-HTTP methods available for each endpoint:
-
-/buses and /buses/int:id: GET
-/bus_stops and /bus_stops/int:id: GET, POST
-/schedules and /schedules/int:id: GET, POST
-/passengers and /passengers/int:id: GET, POST, DELETE
-/favorites and /favorites/int:id: GET, POST, DELETE
-/passenger_favorites/int:id: GET
-'''
-
