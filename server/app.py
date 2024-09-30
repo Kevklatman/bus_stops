@@ -148,13 +148,32 @@ class PassengerFavorites(Resource):
             response_data['passenger_favorites'].append(favorite_data)
 
         return make_response(jsonify(response_data), 200)
+    
+class BusStopsForBus(Resource):
+        def get(self, bus_id):
+            bus = Bus.query.get(bus_id)
+            if not bus:
+                return make_response(jsonify({'error': 'Bus not found'}), 404)
 
-api.add_resource(BusResource, '/buses', '/buses/<int:id>')
-api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
-api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
-api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
-api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')
-api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
+            bus_stops = BusStop.query.join(Schedule).filter(Schedule.bus_id == bus_id).all()
+
+            response_data = {
+                'bus_id': bus.id,
+                'bus_number': bus.number,
+                'bus_stops': [bus_stop.to_dict() for bus_stop in bus_stops]
+            }
+
+            return make_response(jsonify(response_data), 200)
+
+api.add_resource(BusResource, '/buses', '/buses/<int:id>')  # GET 
+api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')  # GET , POST 
+api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')  # GET , POST 
+api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')  # GET , POST , DELETE 
+api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')  # GET , POST , DELETE 
+
+api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')  # GET (gets all favorites for passenger)
+api.add_resource(BusStopsForBus, '/buses/<int:bus_id>/bus_stops')  # GET (gets all bus_stops for a selected bus)
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
