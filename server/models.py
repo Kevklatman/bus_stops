@@ -84,6 +84,7 @@ class Favorite(db.Model, SerializerMixin):
     bus_stop_id = db.Column(db.Integer, db.ForeignKey('bus_stops.id'))
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
+
     passenger = db.relationship('Passenger', back_populates='favorites')
     bus_stop = db.relationship('BusStop', back_populates='favorites')
 

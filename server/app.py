@@ -114,6 +114,10 @@ class FavoriteResource(BaseResource):
         if not passenger or not bus_stop:
             return make_response(jsonify({'error': "Passenger or Bus Stop not found"}), 404)
 
+        existing_favorite = Favorite.query.filter_by(passenger_id=args['passenger_id'], bus_stop_id=args['bus_stop_id']).first()
+        if existing_favorite:
+            return make_response(jsonify({'error': "Favorite already exists"}), 409)
+
         new_favorite = Favorite(**args)
         db.session.add(new_favorite)
         db.session.commit()

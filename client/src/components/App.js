@@ -11,6 +11,7 @@ import Favorites from "../pages/Favorites";
 import Schedule from "../pages/Schedule";
 import Profile from "../pages/Profile";
 import BusDetails from "../pages/BusDetails";
+import AdminDashboard from "../pages/AdminDashboard";
 import "../index.css";
 
 function App() {
