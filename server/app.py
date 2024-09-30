@@ -1,3 +1,4 @@
+#app.py
 from flask import make_response, jsonify
 from flask_restful import Resource, reqparse
 from datetime import datetime
@@ -46,8 +47,8 @@ class BusStopResource(BaseResource):
     @handle_errors
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True)
-        parser.add_argument('location', type=str, required=True)
+        parser.add_argument('name', )
+        parser.add_argument('location')
         args = parser.parse_args()
 
         new_bus_stop = BusStop(**args)
@@ -61,8 +62,8 @@ class ScheduleResource(BaseResource):
     @handle_errors
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('bus_id', type=int, required=True)
-        parser.add_argument('bus_stop_id', type=int, required=True)
+        parser.add_argument('bus_id')
+        parser.add_argument('bus_stop_id')
         parser.add_argument('arrival_time', type=lambda x: datetime.fromisoformat(x), required=True)
         parser.add_argument('departure_time', type=lambda x: datetime.fromisoformat(x), required=True)
         args = parser.parse_args()
@@ -78,8 +79,8 @@ class PassengerResource(BaseResource):
     @handle_errors
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True)
-        parser.add_argument('email', type=str, required=True)
+        parser.add_argument('name')
+        parser.add_argument('email')
         args = parser.parse_args()
 
         new_passenger = Passenger(**args)
@@ -103,8 +104,8 @@ class FavoriteResource(BaseResource):
     @handle_errors
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('passenger_id', type=int, required=True)
-        parser.add_argument('bus_stop_id', type=int, required=True)
+        parser.add_argument('passenger_id')
+        parser.add_argument('bus_stop_id')
         args = parser.parse_args()
 
         passenger = Passenger.query.get(args['passenger_id'])

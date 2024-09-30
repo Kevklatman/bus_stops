@@ -1,3 +1,4 @@
+#models.py
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from config import db
@@ -6,11 +7,11 @@ class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
 
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.Integer)
+    number = db.Column(db.Integer, nullable=False)
     capacity = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    schedules = db.relationship('Schedule', back_populates='bus', )#cascade='all, delete-orphan' <I don't think we'll need this line commenting out for now>
+    schedules = db.relationship('Schedule', back_populates='bus', cascade='all, delete-orphan') 
 
     serialize_rules = ('-schedules.bus',)
     serialize_only = ('id', 'number', 'capacity')
@@ -22,8 +23,8 @@ class Passenger(db.Model, SerializerMixin):
     __tablename__ = "passengers"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    email = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
@@ -34,14 +35,16 @@ class Passenger(db.Model, SerializerMixin):
     @validates("name")
     def validate_name(self, key, name):
         if not name:
-            raise AssertionError("No name provided")
+            raise ValueError("No name provided")
         return name
 
     @validates('email')
-    def validate_email(self, key, address):
-        if '@' not in address:
+    def validate_email(self, key, email):
+        if not email:
+            raise ValueError("Email is required")
+        if '@' not in email:
             raise ValueError("Must provide a valid email address")
-        return address
+        return email
 
     def __repr__(self):
         return f"<Passenger {self.name}, {self.email}>"
@@ -50,8 +53,8 @@ class BusStop(db.Model, SerializerMixin):
     __tablename__ = "bus_stops"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    location = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
+    location = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     favorites = db.relationship('Favorite', back_populates='bus_stop')
@@ -93,10 +96,10 @@ class Schedule(db.Model, SerializerMixin):
     __tablename__ = "schedules"
 
     id = db.Column(db.Integer, primary_key=True)
-    bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'))
+    bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'), nullable=False)
     bus_stop_id = db.Column(db.Integer, db.ForeignKey('bus_stops.id'))
-    arrival_time = db.Column(db.DateTime)
-    departure_time = db.Column(db.DateTime)
+    arrival_time = db.Column(db.DateTime, nullable = False)
+    departure_time = db.Column(db.DateTime, nullable = False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     bus = db.relationship('Bus', back_populates='schedules')
