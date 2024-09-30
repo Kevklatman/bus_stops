@@ -164,7 +164,26 @@ class BusStopsForBus(Resource):
             }
 
             return make_response(jsonify(response_data), 200)
+        
+class SchedulesForBusStop(Resource):
+    def get(self, bus_stop_id):
+        bus_stop = BusStop.query.get(bus_stop_id)
+        if not bus_stop:
+            return make_response(jsonify({'error': 'Bus stop not found'}), 404)
 
+        schedules = Schedule.query.filter(Schedule.bus_stop_id == bus_stop_id).all()
+
+        response_data = {
+            'bus_stop_id': bus_stop.id,
+            'bus_stop_name': bus_stop.name,
+            'schedules': [schedule.to_dict() for schedule in schedules]
+        }
+
+        return make_response(jsonify(response_data), 200)
+
+
+
+api.add_resource(SchedulesForBusStop, '/bus_stops/<int:bus_stop_id>/schedules')  # GET (Read)
 api.add_resource(BusResource, '/buses', '/buses/<int:id>')  # GET 
 api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')  # GET , POST 
 api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')  # GET , POST 
