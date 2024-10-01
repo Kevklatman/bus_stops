@@ -3,7 +3,7 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from config import db
 from sqlalchemy.ext.associationproxy import association_proxy
-from flask_login import UserMixin, LoginManager
+from flask_login import UserMixin
 
 
 class Bus(db.Model, SerializerMixin):

@@ -13,7 +13,7 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return Passenger.query.get(int(user_id))
 
 @app.route('/')
 def index():
@@ -206,13 +206,13 @@ class SchedulesForBusStop(Resource):
 class LoginResource(Resource):
     def post(self):
         data = request.get_json()
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
-        user = Passenger.query.filter_by(username=username).first()
-        if user and user.password == password:
-            login_user(user)
-            return make_response(jsonify({'id': user.id, 'username': user.username}), 200)
+        passenger = Passenger.query.filter_by(email=email).first()
+        if passenger and passenger.password == password:
+            login_user(passenger)
+            return make_response(jsonify({'id': passenger.id, 'email': passenger.email}), 200)
         else:
             return make_response(jsonify({'error': 'Invalid credentials'}), 401)
         
@@ -225,7 +225,7 @@ class LogoutResource(Resource):
 class CheckSessionResource(Resource):
     def get(self):
         if current_user.is_authenticated:
-            return make_response(jsonify({'id': current_user.id, 'username': current_user.username}), 200)
+            return make_response(jsonify({'id': current_user.id, 'email': current_user.email}), 200)
         else:
             return make_response(jsonify({'error': 'Not authenticated'}), 401)
 
