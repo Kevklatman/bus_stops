@@ -152,14 +152,11 @@ class PassengerFavorites(Resource):
             'passenger_favorites': []
         }
 
-        for favorite in passenger.favorites:
-            bus_stop = favorite.bus_stop
+        for bus_stop in passenger.bus_stops:
             favorite_data = {
-                'id': favorite.id,
-                'bus_stop_id': favorite.bus_stop_id,
+                'bus_stop_id': bus_stop.id,
                 'bus_stop_name': bus_stop.name,
-                'bus_stop_location': bus_stop.location,
-                'created_at': favorite.created_at.isoformat()
+                'bus_stop_location': bus_stop.location
             }
             response_data['passenger_favorites'].append(favorite_data)
 

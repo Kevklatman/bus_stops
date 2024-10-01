@@ -13,7 +13,7 @@ class Bus(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     schedules = db.relationship('Schedule', back_populates='bus', cascade='all, delete-orphan') 
-
+    bus_stops = association_proxy('schedules', 'bus_stop')
     serialize_rules = ('-schedules.bus',)
     serialize_only = ('id', 'number', 'capacity')
 
@@ -64,6 +64,7 @@ class BusStop(db.Model, SerializerMixin):
     favorites = db.relationship('Favorite', back_populates='bus_stop')
     passengers = association_proxy('favorites', 'passenger')
     schedules = db.relationship('Schedule', back_populates='bus_stop')
+    bus_stops = association_proxy('schedules', 'bus_stop')
 
     serialize_rules = ('-favorites.bus_stop', '-schedules.bus_stop')
     serialize_only = ('id', 'name', 'location', 'comments')  
