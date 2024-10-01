@@ -3,6 +3,8 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from config import db
 from sqlalchemy.ext.associationproxy import association_proxy
+from flask_login import UserMixin
+
 
 class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
@@ -27,7 +29,6 @@ class Passenger(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    password = db.Column(db.String)
 
     favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
     bus_stops = association_proxy('favorites', 'bus_stop')
@@ -128,3 +129,27 @@ class Schedule(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"<Schedule Bus NO: {self.bus.number}>"
+    
+
+class User(UserMixin, db.Model, SerializerMixin):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+    serialize_only = ('id', 'username', 'created_at')
+
+    @validates("username")
+    def validate_username(self, key, username):
+        if not username:
+            raise AssertionError("Username is required")
+        if User.query.filter(User.username == username).first():
+            raise AssertionError("Username is already in use")
+        if len(username) < 3 or len(username) > 100:
+            raise AssertionError("Username must be between 3 and 100 characters")
+        return username
+
+    def __repr__(self):
+        return f"<User {self.username}>"

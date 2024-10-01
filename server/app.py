@@ -3,10 +3,10 @@ from flask import make_response, jsonify, request
 from flask_restful import Resource
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from config import app, db, api
-from models import Bus, Passenger, BusStop, Favorite, Schedule
-
+from models import Bus, Passenger, BusStop, Favorite, Schedule, User
 @app.route('/')
 def index():
     return '<h1>Project Server</h1>'
