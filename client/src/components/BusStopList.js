@@ -13,7 +13,7 @@ function BusStopList({ busStops }) {
         </div>
       ))}
     </div>
-  );
+  );   
 }
 
 export default BusStopList;
