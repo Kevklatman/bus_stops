@@ -2,6 +2,7 @@
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from config import db
+from sqlalchemy.ext.associationproxy import association_proxy
 
 class Bus(db.Model, SerializerMixin):
     __tablename__ = "buses"
@@ -29,6 +30,7 @@ class Passenger(db.Model, SerializerMixin):
     password = db.Column(db.String)
 
     favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
+    bus_stops = association_proxy('favorites', 'bus_stop')
 
     serialize_rules = ('-favorites.passenger',)
     serialize_only = ('id', 'name', 'email')
@@ -60,6 +62,7 @@ class BusStop(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     favorites = db.relationship('Favorite', back_populates='bus_stop')
+    passengers = association_proxy('favorites', 'passenger')
     schedules = db.relationship('Schedule', back_populates='bus_stop')
 
     serialize_rules = ('-favorites.bus_stop', '-schedules.bus_stop')
@@ -77,6 +80,8 @@ class BusStop(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f"<BusStop {self.name}, {self.location}>"
+
+
 
 class Favorite(db.Model, SerializerMixin):
     __tablename__ = "favorites"
