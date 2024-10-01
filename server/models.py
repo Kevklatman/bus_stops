@@ -109,6 +109,7 @@ class Passenger(db.Model, UserMixin, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    is_admin = db.Column(db.Boolean, nullable=False)
 
     favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
     bus_stops = association_proxy('favorites', 'bus_stop')

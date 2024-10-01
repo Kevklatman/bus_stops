@@ -14,12 +14,13 @@ from models import db, Passenger, BusStop, Favorite, Bus, Schedule
 def create_passengers(num):
     passengers = []
     for _ in range(num):
-        username = fake.user_name()
         password = fake.password()
+        is_admin = fake.boolean(chance_of_getting_true=10)  # 10% chance of being an admin
         p = Passenger(
             password=password,
             name=fake.name(),
             email=fake.email(),
+            is_admin=is_admin
         )
         passengers.append(p)
     return passengers
@@ -29,7 +30,8 @@ def create_bus_stops(num):
     for _ in range(num):
         bs = BusStop(
             name=fake.street_name() + " Stop",
-            location=fake.address()
+            location=fake.address(),
+            comments=fake.sentence()
         )
         bus_stops.append(bs)
     return bus_stops
