@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from config import app, db, api
-from models import Bus, Passenger, BusStop, Favorite, Schedule, User
+from models import Bus, Passenger, BusStop, Favorite, Schedule
 
 login_manager = LoginManager()
 login_manager.init_app(app)

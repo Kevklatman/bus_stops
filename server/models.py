@@ -22,36 +22,6 @@ class Bus(db.Model, SerializerMixin):
     def __repr__(self):
         return f"<Bus {self.id}, {self.number}, {self.capacity}>"
 
-class Passenger(db.Model, SerializerMixin):
-    __tablename__ = "passengers"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    email = db.Column(db.String, nullable=False, unique=True)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
-
-    favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
-    bus_stops = association_proxy('favorites', 'bus_stop')
-
-    serialize_rules = ('-favorites.passenger',)
-    serialize_only = ('id', 'name', 'email')
-    
-    @validates("name")
-    def validate_name(self, key, name):
-        if not name:
-            raise ValueError("No name provided")
-        return name
-
-    @validates('email')
-    def validate_email(self, key, email):
-        if not email:
-            raise ValueError("Email is required")
-        if '@' not in email:
-            raise ValueError("Must provide a valid email address")
-        return email
-
-    def __repr__(self):
-        return f"<Passenger {self.name}, {self.email}>"
 
 class BusStop(db.Model, SerializerMixin):
     __tablename__ = "bus_stops"
@@ -131,26 +101,34 @@ class Schedule(db.Model, SerializerMixin):
         return f"<Schedule Bus NO: {self.bus.number}>"
     
 
-class User(UserMixin, db.Model, SerializerMixin):
-    __tablename__ = "users"
+class Passenger(db.Model, UserMixin, SerializerMixin):
+    __tablename__ = "passengers"
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    serialize_only = ('id', 'username', 'created_at')
+    favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
+    bus_stops = association_proxy('favorites', 'bus_stop')
 
-    @validates("username")
-    def validate_username(self, key, username):
-        if not username:
-            raise AssertionError("Username is required")
-        if User.query.filter(User.username == username).first():
-            raise AssertionError("Username is already in use")
-        if len(username) < 3 or len(username) > 100:
-            raise AssertionError("Username must be between 3 and 100 characters")
-        return username
+    serialize_rules = ('-favorites.passenger',)
+    serialize_only = ('id', 'username', 'name', 'email', 'created_at')
 
+    @validates("name")
+    def validate_name(self, key, name):
+        if not name:
+            raise ValueError("No name provided")
+        return name
+
+    @validates('email')
+    def validate_email(self, key, email):
+        if not email:
+            raise ValueError("Email is required")
+        if '@' not in email:
+            raise ValueError("Must provide a valid email address")
+        return email
 
     def __repr__(self):
-        return f"<User {self.username}>"
+        return f"<Passenger {self.name}, {self.email}>"

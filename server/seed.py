@@ -9,12 +9,15 @@ from faker import Faker
 
 # Local imports
 from app import app
-from models import db, Passenger, BusStop, Favorite, Bus, Schedule, User
+from models import db, Passenger, BusStop, Favorite, Bus, Schedule
 
 def create_passengers(num):
     passengers = []
     for _ in range(num):
+        username = fake.user_name()
+        password = fake.password()
         p = Passenger(
+            password=password,
             name=fake.name(),
             email=fake.email(),
         )
@@ -70,18 +73,6 @@ def create_favorites(num, passengers, bus_stops):
         favorites.append(f)
     return favorites
 
-def create_users(num):
-    users = []
-    for _ in range(num):
-        username = fake.user_name()
-        password = fake.password()
-        u = User(
-            username=username,
-            password=password
-        )
-        users.append(u)
-    return users
-
 if __name__ == '__main__':
     fake = Faker()
     with app.app_context():
@@ -97,10 +88,9 @@ if __name__ == '__main__':
         buses = create_buses(10)
         schedules = create_schedules(100, buses, bus_stops)
         favorites = create_favorites(30, passengers, bus_stops)
-        users = create_users(5)
 
         # Add all instances to session and commit
-        db.session.add_all(passengers + bus_stops + buses + schedules + favorites + users)
+        db.session.add_all(passengers + bus_stops + buses + schedules + favorites)
         db.session.commit()
 
         print("Seed completed successfully!")
