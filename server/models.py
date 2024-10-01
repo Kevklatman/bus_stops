@@ -26,7 +26,6 @@ class Passenger(db.Model, SerializerMixin):
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    password = db.Column(db.String, nullable = False)
 
     favorites = db.relationship('Favorite', back_populates="passenger", cascade='all, delete-orphan')
 
