@@ -7,6 +7,14 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 
 from config import app, db, api
 from models import Bus, Passenger, BusStop, Favorite, Schedule, User
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 @app.route('/')
 def index():
     return '<h1>Project Server</h1>'
@@ -193,6 +201,33 @@ class SchedulesForBusStop(Resource):
         }
 
         return make_response(jsonify(response_data), 200)
+    
+
+class LoginResource(Resource):
+    def post(self):
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        user = User.query.filter_by(username=username).first()
+        if user and user.password == password:
+            login_user(user)
+            return make_response(jsonify({'id': user.id, 'username': user.username}), 200)
+        else:
+            return make_response(jsonify({'error': 'Invalid credentials'}), 401)
+        
+class LogoutResource(Resource):
+    @login_required
+    def post(self):
+        logout_user()
+        return make_response(jsonify({'message': 'Logged out successfully'}), 200)
+
+class CheckSessionResource(Resource):
+    def get(self):
+        if current_user.is_authenticated:
+            return make_response(jsonify({'id': current_user.id, 'username': current_user.username}), 200)
+        else:
+            return make_response(jsonify({'error': 'Not authenticated'}), 401)
 
 
 
@@ -204,6 +239,10 @@ api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')
 api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 api.add_resource(BusStopsForBus, '/buses/<int:bus_id>/bus_stops')
 api.add_resource(SchedulesForBusStop, '/bus_stops/<int:bus_stop_id>/schedules')
+
+api.add_resource(LoginResource, '/login')
+api.add_resource(LogoutResource, '/logout')
+api.add_resource(CheckSessionResource, '/check_session')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)

@@ -3,7 +3,7 @@ from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 from config import db
 from sqlalchemy.ext.associationproxy import association_proxy
-from flask_login import UserMixin
+from flask_login import UserMixin, LoginManager
 
 
 class Bus(db.Model, SerializerMixin):
@@ -150,6 +150,7 @@ class User(UserMixin, db.Model, SerializerMixin):
         if len(username) < 3 or len(username) > 100:
             raise AssertionError("Username must be between 3 and 100 characters")
         return username
+
 
     def __repr__(self):
         return f"<User {self.username}>"
