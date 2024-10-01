@@ -209,7 +209,7 @@ class LoginResource(Resource):
         username = data.get('username')
         password = data.get('password')
 
-        user = User.query.filter_by(username=username).first()
+        user = Passenger.query.filter_by(username=username).first()
         if user and user.password == password:
             login_user(user)
             return make_response(jsonify({'id': user.id, 'username': user.username}), 200)
