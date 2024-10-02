@@ -1,6 +1,7 @@
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
-from config import db
+from sqlalchemy.ext.hybrid import hybrid_property 
+from config import db, bcrypt
 from sqlalchemy.ext.associationproxy import association_proxy
 from flask_login import UserMixin
 
@@ -104,7 +105,8 @@ class Passenger(db.Model, UserMixin, SerializerMixin):
     __tablename__ = "passengers"
 
     id = db.Column(db.Integer, primary_key=True)
-    password = db.Column(db.String(100), nullable=False)
+    # Store the hashed password
+    _password_hash = db.Column(db.String)
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
@@ -120,6 +122,7 @@ class Passenger(db.Model, UserMixin, SerializerMixin):
         if not name:
             raise ValueError("No name provided")
         return name
+    
 
     @validates('email')
     def validate_email(self, key, email):
@@ -131,3 +134,21 @@ class Passenger(db.Model, UserMixin, SerializerMixin):
 
     def __repr__(self):
         return f"<Passenger {self.name}, {self.email}>"
+    
+    #This will allow us to set password_hash directly inside the sqlite database. 
+    @hybrid_property
+    def password_hash(self):
+        raise AttributeError("Password hashes may not be viewed.")
+    
+    @password_hash.setter 
+    def password_hash(self,password):
+        #generate_passwoord_hash is a boiler plate(a built in) method that is given to us by bycrpt that encrypts plaintext 
+        password_hash = bcrypt.generate_password_hash(password.encode("utf-8"))
+        #the decode will make the password shorter in the database 
+        # Hash the password and store it
+        self._password_hash = password_hash.decode('utf-8')
+    
+    def authenticate(self, password):
+        #using a built in bcrypt method. This returns True or False
+        # Check if the provided password matches the hashed password
+        return bcrypt.check_password_hash(self._password_hash, password.encode('utf-8'))
