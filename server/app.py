@@ -3,7 +3,7 @@ from flask_restful import Resource
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import check_password_hash
+
 
 from config import app, db, api
 from models import Bus, Passenger, BusStop, Favorite, Schedule
@@ -126,24 +126,20 @@ class PassengerResource(Resource):
 
     def post(self):
         data = request.get_json()
-        hashed_password = generate_password_hash(data['password'])
         new_passenger = Passenger(
             name=data['name'],
             email=data['email'],
-            password=hashed_password,
+            password=data['password'],
             is_admin=data.get('is_admin', False)  # Default to False if not provided
         )
-        
+
         try:
             db.session.add(new_passenger)
             db.session.commit()
             return make_response(jsonify(new_passenger.to_dict()), 201)
         except IntegrityError:
             db.session.rollback()
-            return make_response(jsonify({'error': "Email already exists"}), 409)
-        except Exception as e:
-            db.session.rollback()
-            return make_response(jsonify({'error': str(e)}), 400)
+            return make_response(jsonify({'error': "Passenger already exists"}), 409)
 
     def patch(self, id):
         passenger = Passenger.query.get(id)
@@ -152,8 +148,6 @@ class PassengerResource(Resource):
         
         data = request.get_json()
         for key, value in data.items():
-            if key == 'password':
-                value = generate_password_hash(value)
             setattr(passenger, key, value)
         
         try:
@@ -269,7 +263,7 @@ class LoginResource(Resource):
         password = data.get('password')
 
         passenger = Passenger.query.filter_by(email=email).first()
-        if passenger and check_password_hash(passenger.password, password):
+        if passenger and passenger.password == password:
             login_user(passenger)
             return make_response(jsonify({
                 'id': passenger.id, 
