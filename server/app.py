@@ -225,7 +225,7 @@ class LogoutResource(Resource):
 class CheckSessionResource(Resource):
     def get(self):
         if current_user.is_authenticated:
-            return make_response(jsonify({'id': current_user.id, 'email': current_user.email}), 200)
+            return make_response(jsonify({'id': current_user.id, 'email': current_user.email, 'is_admin': current_user.is_admin}), 200)
         else:
             return make_response(jsonify({'error': 'Not authenticated'}), 401)
 
