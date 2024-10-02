@@ -212,7 +212,7 @@ class LoginResource(Resource):
         passenger = Passenger.query.filter_by(email=email).first()
         if passenger and passenger.password == password:
             login_user(passenger)
-            return make_response(jsonify({'id': passenger.id, 'email': passenger.email}), 200)
+            return make_response(jsonify({'id': passenger.id, 'email': passenger.email, 'is_admin': passenger.is_admin}), 200)
         else:
             return make_response(jsonify({'error': 'Invalid credentials'}), 401)
         
