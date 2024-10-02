@@ -10,19 +10,19 @@ function AdminDashboard() {
   useEffect(() => {
     if (user && user.isAdmin) {
       // Fetch buses
-      fetch("/api/buses")
+      fetch("/buses")
         .then((res) => res.json())
         .then(setBuses);
 
       // Fetch bus stops
-      fetch("/api/bus-stops")
+      fetch("/bus_stops")
         .then((res) => res.json())
         .then(setBusStops);
     }
   }, [user]);
 
   const handleUpdateBus = (busId, updates) => {
-    fetch(`/api/buses/${busId}`, {
+    fetch(`/buses/${busId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -36,7 +36,7 @@ function AdminDashboard() {
   };
 
   const handleUpdateBusStop = (stopId, updates) => {
-    fetch(`/api/bus-stops/${stopId}`, {
+    fetch(`/bus_stops/${stopId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

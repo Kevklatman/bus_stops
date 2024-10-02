@@ -11,6 +11,7 @@ import Favorites from "../pages/Favorites";
 import Schedule from "../pages/Schedule";
 import Profile from "../pages/Profile";
 import BusDetails from "../pages/BusDetails";
+import LoginForm from '../components/LoginForm';
 import AdminDashboard from "../pages/AdminDashboard";
 import "../index.css";
 
@@ -28,6 +29,8 @@ function App() {
             <Route path="/schedule/:stopId" component={Schedule} />
             <Route path="/profile" component={Profile} />
             <Route path="/bus/:busId" component={BusDetails} />
+            <Route path="/login" component={LoginForm} />
+            <Route path="/admin" component={AdminDashboard}/>
           </Switch>
           <Footer />
         </div>
