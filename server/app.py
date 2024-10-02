@@ -129,17 +129,19 @@ class PassengerResource(Resource):
         new_passenger = Passenger(
             name=data['name'],
             email=data['email'],
-            password=data['password'],
-            is_admin=data.get('is_admin', False)  # Default to False if not provided
+            password=data['password']
         )
-
         try:
             db.session.add(new_passenger)
             db.session.commit()
             return make_response(jsonify(new_passenger.to_dict()), 201)
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
-            return make_response(jsonify({'error': "Passenger already exists"}), 409)
+            error_message = str(e.orig)
+            if "UNIQUE constraint failed: passengers.email" in error_message:
+                return make_response(jsonify({'error': "Passenger with this email already exists"}), 409)
+            else:
+                return make_response(jsonify({'error': "An error occurred while creating the passenger"}), 500)
 
     def patch(self, id):
         passenger = Passenger.query.get(id)

@@ -15,12 +15,10 @@ def create_passengers(num):
     passengers = []
     for _ in range(num):
         password = fake.password()
-        is_admin = fake.boolean(chance_of_getting_true=10)  # 10% chance of being an admin
         p = Passenger(
             password=password,
             name=fake.name(),
             email=fake.email(),
-            is_admin=is_admin
         )
         passengers.append(p)
     return passengers
