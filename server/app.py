@@ -102,6 +102,24 @@ class PassengerResource(Resource):
         except IntegrityError:
             db.session.rollback()
             return make_response(jsonify({'error': "Passenger already exists"}), 409)
+    
+    def patch(self, id):
+        passenger = Passenger.query.get(id)
+        if not passenger:
+            return make_response(jsonify({'error': "Passenger not found"}), 404)
+
+        data = request.get_json()
+        if 'name' in data:
+            passenger.name = data['name']
+        if 'email' in data:
+            passenger.email = data['email']
+
+        try:
+            db.session.commit()
+            return make_response(jsonify(passenger.to_dict()), 200)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 400)
 
     def delete(self, id):
         passenger = Passenger.query.get(id)
@@ -234,7 +252,7 @@ class CheckSessionResource(Resource):
 api.add_resource(BusResource, '/buses', '/buses/<int:id>')
 api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
 api.add_resource(ScheduleResource, '/schedules', '/schedules/<int:id>')
-api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>')
+api.add_resource(PassengerResource, '/passengers', '/passengers/<int:id>', methods=['GET', 'POST', 'DELETE', 'PATCH'])
 api.add_resource(FavoriteResource, '/favorites', '/favorites/<int:id>')
 api.add_resource(PassengerFavorites, '/passenger_favorites/<int:id>')
 api.add_resource(BusStopsForBus, '/buses/<int:bus_id>/bus_stops')
