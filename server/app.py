@@ -271,7 +271,6 @@ class LoginResource(Resource):
                 'id': passenger.id, 
                 'email': passenger.email, 
                 'name': passenger.name,
-                'is_admin': passenger.is_admin
             }), 200)
         else:
             return make_response(jsonify({'error': 'Invalid email or password'}), 401)
