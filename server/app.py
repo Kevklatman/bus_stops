@@ -168,7 +168,6 @@ class PassengerResource(Resource):
         db.session.delete(passenger)
         db.session.commit()
         return make_response(jsonify({'message': "Passenger deleted successfully"}), 200)
-    
 class FavoriteResource(Resource):
     def get(self, id=None):
         if id:
@@ -186,6 +185,8 @@ class FavoriteResource(Resource):
             passenger_id = current_user.id
             bus_stop_id = data.get('bus_stop_id')
 
+            current_app.logger.info(f"Adding favorite for passenger {passenger_id}, bus stop {bus_stop_id}")
+
             if not bus_stop_id:
                 return make_response(jsonify({'error': "Bus Stop ID is required"}), 400)
 
@@ -196,16 +197,22 @@ class FavoriteResource(Resource):
 
             existing_favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
             if existing_favorite:
-                return make_response(jsonify({'error': "Favorite already exists"}), 409)
+                current_app.logger.info(f"Favorite already exists for passenger {passenger_id}, bus stop {bus_stop_id}")
+                return make_response(jsonify({'message': "Favorite already exists", 'favorite': existing_favorite.to_dict()}), 200)
 
             new_favorite = Favorite(passenger_id=passenger_id, bus_stop_id=bus_stop_id)
             db.session.add(new_favorite)
-            db.session.commit()
-            return make_response(jsonify(new_favorite.to_dict()), 201)
+            try:
+                db.session.commit()
+                current_app.logger.info(f"New favorite added for passenger {passenger_id}, bus stop {bus_stop_id}")
+                return make_response(jsonify({'message': "Favorite added successfully", 'favorite': new_favorite.to_dict()}), 201)
+            except IntegrityError:
+                db.session.rollback()
+                current_app.logger.warning(f"IntegrityError: Favorite already exists for passenger {passenger_id}, bus stop {bus_stop_id}")
+                return make_response(jsonify({'message': "Favorite already exists"}), 200)
         except Exception as e:
             current_app.logger.error(f"Error in FavoriteResource: {str(e)}")
-            return make_response({'error': 'Internal server error'}, 500)
-    
+            return make_response(jsonify({'error': 'Internal server error'}), 500)
 
     def delete(self, id):
         favorite = Favorite.query.get(id)
@@ -282,7 +289,7 @@ class LoginResource(Resource):
         passenger = Passenger.query.filter_by(email=email).first()
 
         if passenger and passenger.authenticate(password):
-            login_user(passenger)  # Make sure this line is present
+            login_user(passenger)  
             return make_response(jsonify({'message': 'Login successful', 'user': passenger.to_dict()}), 200)
 
         return make_response(jsonify({'error': 'Invalid email or password'}), 401)
