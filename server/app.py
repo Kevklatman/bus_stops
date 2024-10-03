@@ -129,8 +129,10 @@ class PassengerResource(Resource):
         new_passenger = Passenger(
             name=data['name'],
             email=data['email'],
-            password=data['password']
         )
+        #password_hash= data.get('password') will enable the @password_hash.setter thus running the encryption that was written in models.py
+        #Set the password using the setter method
+        new_passenger.password_hash = data['password'] 
         try:
             db.session.add(new_passenger)
             db.session.commit()
@@ -264,17 +266,17 @@ class LoginResource(Resource):
         email = data.get('email')
         password = data.get('password')
 
+        if not email or not password:
+            return make_response(jsonify({'error': 'Email and password required'}), 400)
+
         passenger = Passenger.query.filter_by(email=email).first()
-        if passenger and passenger.password == password:
-            login_user(passenger)
-            return make_response(jsonify({
-                'id': passenger.id, 
-                'email': passenger.email, 
-                'name': passenger.name,
-            }), 200)
-        else:
-            return make_response(jsonify({'error': 'Invalid email or password'}), 401)
-        
+
+        if passenger and passenger.authenticate(password):  # Use the authenticate method
+            # Login successful, proceed with your logic
+            return make_response(jsonify({'message': 'Login successful'}), 200)
+
+        return make_response(jsonify({'error': 'Invalid email or password'}), 401)
+    
 class LogoutResource(Resource):
     @login_required
     def post(self):
@@ -283,10 +285,14 @@ class LogoutResource(Resource):
 
 class CheckSessionResource(Resource):
     def get(self):
+        # Check if the user is authenticated via Flask-Login's current_user
         if current_user.is_authenticated:
-            return make_response(jsonify({'id': current_user.id, 'email': current_user.email, 'is_admin': current_user.is_admin}), 200)
-        else:
-            return make_response(jsonify({'error': 'Not authenticated'}), 401)
+            # Create a response with the current user's details
+            return make_response({
+                'id': current_user.id,
+                'email': current_user.email,
+            }, 200)
+        return make_response({}, 401)
 
 api.add_resource(BusResource, '/buses', '/buses/<int:id>')
 api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')

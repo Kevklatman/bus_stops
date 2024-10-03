@@ -16,10 +16,10 @@ def create_passengers(num):
     for _ in range(num):
         password = fake.password()
         p = Passenger(
-            password=password,
             name=fake.name(),
             email=fake.email(),
         )
+        p.password_hash = password
         passengers.append(p)
     return passengers
 
