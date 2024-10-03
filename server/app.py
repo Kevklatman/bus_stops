@@ -1,9 +1,9 @@
-from flask import make_response, jsonify, request
+from flask import make_response, jsonify, request, current_app
 from flask_restful import Resource
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-
+from flask_cors import CORS
 
 from config import app, db, api
 from models import Bus, Passenger, BusStop, Favorite, Schedule
@@ -179,23 +179,33 @@ class FavoriteResource(Resource):
         favorites = Favorite.query.all()
         return make_response(jsonify([favorite.to_dict() for favorite in favorites]), 200)
 
+    @login_required
     def post(self):
-        data = request.get_json()
+        try:
+            data = request.get_json()
+            passenger_id = current_user.id
+            bus_stop_id = data.get('bus_stop_id')
 
-        passenger = Passenger.query.get(data['passenger_id'])
-        bus_stop = BusStop.query.get(data['bus_stop_id'])
+            if not bus_stop_id:
+                return make_response(jsonify({'error': "Bus Stop ID is required"}), 400)
 
-        if not passenger or not bus_stop:
-            return make_response(jsonify({'error': "Passenger or Bus Stop not found"}), 404)
+            bus_stop = BusStop.query.get(bus_stop_id)
 
-        existing_favorite = Favorite.query.filter_by(passenger_id=data['passenger_id'], bus_stop_id=data['bus_stop_id']).first()
-        if existing_favorite:
-            return make_response(jsonify({'error': "Favorite already exists"}), 409)
+            if not bus_stop:
+                return make_response(jsonify({'error': "Bus Stop not found"}), 404)
 
-        new_favorite = Favorite(**data)
-        db.session.add(new_favorite)
-        db.session.commit()
-        return make_response(jsonify(new_favorite.to_dict()), 201)
+            existing_favorite = Favorite.query.filter_by(passenger_id=passenger_id, bus_stop_id=bus_stop_id).first()
+            if existing_favorite:
+                return make_response(jsonify({'error': "Favorite already exists"}), 409)
+
+            new_favorite = Favorite(passenger_id=passenger_id, bus_stop_id=bus_stop_id)
+            db.session.add(new_favorite)
+            db.session.commit()
+            return make_response(jsonify(new_favorite.to_dict()), 201)
+        except Exception as e:
+            current_app.logger.error(f"Error in FavoriteResource: {str(e)}")
+            return make_response({'error': 'Internal server error'}, 500)
+    
 
     def delete(self, id):
         favorite = Favorite.query.get(id)
@@ -271,9 +281,9 @@ class LoginResource(Resource):
 
         passenger = Passenger.query.filter_by(email=email).first()
 
-        if passenger and passenger.authenticate(password):  # Use the authenticate method
-            # Login successful, proceed with your logic
-            return make_response(jsonify({'message': 'Login successful'}), 200)
+        if passenger and passenger.authenticate(password):
+            login_user(passenger)  # Make sure this line is present
+            return make_response(jsonify({'message': 'Login successful', 'user': passenger.to_dict()}), 200)
 
         return make_response(jsonify({'error': 'Invalid email or password'}), 401)
     
@@ -285,14 +295,20 @@ class LogoutResource(Resource):
 
 class CheckSessionResource(Resource):
     def get(self):
-        # Check if the user is authenticated via Flask-Login's current_user
-        if current_user.is_authenticated:
-            # Create a response with the current user's details
-            return make_response({
-                'id': current_user.id,
-                'email': current_user.email,
-            }, 200)
-        return make_response({}, 401)
+        try:
+            if current_user.is_authenticated:
+                return make_response({
+                    'id': current_user.id,
+                    'email': current_user.email,
+                }, 200)
+            return make_response({'error': 'User not authenticated'}, 401)
+        except Exception as e:
+            current_app.logger.error(f"Error in CheckSessionResource: {str(e)}")
+            return make_response({'error': 'Internal server error'}, 500)
+        
+@app.errorhandler(401)
+def unauthorized(error):
+    return make_response(jsonify({'error': 'Unauthorized access'}), 401)
 
 api.add_resource(BusResource, '/buses', '/buses/<int:id>')
 api.add_resource(BusStopResource, '/bus_stops', '/bus_stops/<int:id>')
