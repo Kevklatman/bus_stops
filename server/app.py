@@ -1,7 +1,7 @@
 from flask import make_response, jsonify, request, current_app
 from flask_restful import Resource
 from datetime import datetime
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_cors import CORS
 
@@ -160,14 +160,27 @@ class PassengerResource(Resource):
         except IntegrityError:
             db.session.rollback()
             return make_response(jsonify({'error': "Email already in use"}), 409)
-
     def delete(self, id):
-        passenger = Passenger.query.get(id)
-        if not passenger:
-            return make_response(jsonify({'error': "Passenger not found"}), 404)
-        db.session.delete(passenger)
-        db.session.commit()
-        return make_response(jsonify({'message': "Passenger deleted successfully"}), 200)
+        try:
+            passenger = Passenger.query.get(id)
+            if not passenger:
+                current_app.logger.info(f"Attempted to delete non-existent passenger with id {id}")
+                return make_response(jsonify({'error': "Passenger not found"}), 404)
+            
+            current_app.logger.info(f"Deleting passenger with id {id}")
+            db.session.delete(passenger)
+            db.session.commit()
+            current_app.logger.info(f"Successfully deleted passenger with id {id}")
+            return make_response(jsonify({'message': "Passenger deleted successfully"}), 200)
+        
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error deleting passenger with id {id}: {str(e)}")
+            return make_response(jsonify({'error': "An error occurred while deleting the passenger"}), 500)
+        
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error deleting passenger with id {id}: {str(e)}")
+            return make_response(jsonify({'error': "An unexpected error occurred"}), 500)
 class FavoriteResource(Resource):
     def get(self, id=None):
         if id:
